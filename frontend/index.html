@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IoT Air Quality Dashboard - FUTA Station</title>
+    <!-- Icons & Chart Libraries -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            /* Ambient background image overlay of air pollution */
+            background: linear-gradient(rgba(11, 19, 31, 0.55), rgba(11, 19, 31, 0.70)), 
+                        url('https://images.unsplash.com/photo-1611273426858-450d8e3c9fce?q=80&w=1600&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: #f8fafc;
+            display: flex;
+            justify-content: center;
+            padding: 1.5rem 1rem;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1100px;
+            width: 100%;
+        }
+
+        /* Academic Top Header */
+        header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(12px);
+            padding: 1.25rem;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
+        }
+
+        .institution-title {
+            font-size: 1.05rem;
+            font-weight: 800;
+            letter-spacing: 1.2px;
+            color: #38bdf8;
+            text-transform: uppercase;
+            margin-bottom: 0.3rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        header h1 {
+            font-size: 1.35rem;
+            color: #ffffff;
+            margin-bottom: 0.6rem;
+            line-height: 1.3;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .meta-info {
+            font-size: 0.88rem;
+            color: #cbd5e1;
+            margin-bottom: 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.5rem 0.8rem;
+        }
+
+        .meta-info span strong {
+            color: #38bdf8;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: center;
+            gap: 0.75rem;
+        }
+
+        .btn {
+            border: none;
+            padding: 0.6rem 1.3rem;
+            font-size: 0.88rem;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .btn:active {
+            transform: scale(0.96);
+        }
+
+        .btn-primary { background-color: #38bdf8; color: #0f172a; }
+        .btn-primary:hover { background-color: #7dd3fc; }
+
+        .btn-secondary { background-color: rgba(30, 41, 59, 0.9); color: #f8fafc; border: 1px solid rgba(255, 255, 255, 0.2); }
+        .btn-secondary:hover { background-color: #334155; }
+
+        /* Location Header */
+        .location-header {
+            text-align: center;
+            margin-bottom: 1.2rem;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.7);
+        }
+
+        .location-header h2 {
+            font-size: 1.85rem;
+            font-weight: 800;
+            color: #ffffff;
+        }
+
+        .location-header p {
+            font-size: 0.9rem;
+            color: #e2e8f0;
+            font-weight: 500;
+        }
+
+        /* Glassmorphism Panel Cards */
+        .panel-card, .pollutant-graph-panel, .source-card, .hourly-container, .param-card {
+            background-color: rgba(15, 23, 42, 0.82);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+        }
+
+        .pollutant-graph-panel {
+            border-radius: 18px;
+            padding: 1.2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .pollutant-chart-box {
+            position: relative;
+            height: 250px;
+            width: 100%;
+        }
+
+        /* AQI Index Standard Grid Card */
+        .aqi-scale-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 0.75rem;
+            margin-top: 0.8rem;
+        }
+
+        .aqi-level-box {
+            padding: 0.75rem 0.5rem;
+            border-radius: 12px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-weight: 800;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .aqi-label {
+            font-size: 0.95rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .aqi-range {
+            font-size: 0.82rem;
+            opacity: 0.95;
+        }
+
+        /* Data Source Card */
+        .source-card {
+            border-radius: 14px;
+            padding: 0.85rem 1.2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            color: #cbd5e1;
+        }
+
+        .source-card strong { color: #f8fafc; }
+
+        /* Hourly Forecast Section */
+        .section-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #38bdf8;
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+        }
+
+        .hourly-container {
+            border-radius: 18px;
+            padding: 1.2rem;
+            margin-bottom: 1.5rem;
+            overflow-x: auto;
+        }
+
+        .hourly-flex {
+            display: flex;
+            justify-content: space-between;
+            min-width: 500px;
+            gap: 1rem;
+        }
+
+        .hourly-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.4rem;
+            flex: 1;
+        }
+
+        .hourly-time {
+            font-size: 0.8rem;
+            color: #cbd5e1;
+            font-weight: 600;
+        }
+
+        .hourly-badge {
+            background: #eab308;
+            color: #0f172a;
+            font-weight: 800;
+            font-size: 0.85rem;
+            padding: 0.25rem 0.6rem;
+            border-radius: 8px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .hourly-icon {
+            font-size: 1.2rem;
+            color: #cbd5e1;
+            margin: 0.2rem 0;
+        }
+
+        .hourly-temp {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #f8fafc;
+        }
+
+        /* Parameters Grid (8 Cards Grid) */
+        .parameters-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.9rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 900px) {
+            .parameters-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        .param-card {
+            color: #f8fafc;
+            border-radius: 16px;
+            padding: 0.9rem 1.1rem;
+        }
+
+        .param-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            color: #cbd5e1;
+        }
+
+        .param-title {
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+
+        .param-header .icon {
+            color: #38bdf8;
+            font-size: 0.9rem;
+        }
+
+        .param-value {
+            font-size: 1.7rem;
+            font-weight: 800;
+            line-height: 1.1;
+        }
+
+        .param-unit {
+            font-size: 0.75rem;
+            color: #94a3b8;
+        }
+
+        /* Dashboard Bottom Row */
+        .dashboard-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 850px) {
+            .dashboard-row { grid-template-columns: 1fr; }
+        }
+
+        .panel-card {
+            border-radius: 18px;
+            padding: 1.2rem;
+        }
+
+        .chart-box {
+            position: relative;
+            height: 230px;
+            width: 100%;
+        }
+
+        .metrics-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.83rem;
+            margin-top: 0.6rem;
+        }
+
+        .metrics-table th, .metrics-table td {
+            padding: 0.55rem 0.4rem;
+            text-align: left;
+        }
+
+        .metrics-table th {
+            color: #38bdf8;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .metrics-table td {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .metrics-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .val-rf { color: #4ade80; font-weight: 700; }
+        .val-dt { color: #facc15; font-weight: 700; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Academic Thesis Header -->
+        <header>
+            <div class="institution-title">Federal University of Technology, Akure</div>
+            <h1>Development of an IoT-based Air Quality Data Collection Device and Analysis of Air Pollution</h1>
+            <div class="meta-info">
+                <span>Dept: <strong>COMPUTER ENGINEERING</strong></span> | 
+                <span>School: <strong>School of Engineering and Electrical Systems</strong></span> | 
+                <span>Matric No: <strong>CPE/24/3741</strong></span> | 
+                <span>Device ID: <strong id="device_id">Connecting...</strong></span> | 
+                <span>Updated: <strong id="timestamp">--</strong> (WAT)</span>
+            </div>
+            <div class="actions">
+                <a href="http://127.0.0.1:8000/export-csv" class="btn btn-secondary" download>
+    <i class="fas fa-file-download"></i> Download Dataset (CSV)
+</a>
+                <button id="refreshBtn" onclick="fetchTelemetryData()" class="btn btn-primary">
+                    <i id="refreshIcon" class="fas fa-sync-alt"></i> Refresh Now
+                </button>
+            </div>
+        </header>
+
+        <!-- Location Header -->
+        <div class="location-header">
+            <h2>Akure Monitoring Station, FUTA-Nigeria</h2>
+            <p>Ondo State, Nigeria | Hardware Node Telemetry</p>
+        </div>
+
+        <!-- AQI Scale Card -->
+        <div class="panel-card" style="margin-bottom: 1.5rem;">
+            <div class="section-title">
+                <i class="fas fa-layer-group"></i> Air Quality Index (AQI) Reference Scale
+            </div>
+            <div class="aqi-scale-grid">
+                <div class="aqi-level-box" style="background-color: #22c55e; color: #0f172a;">
+                    <span class="aqi-label">Very Good</span>
+                    <span class="aqi-range">0 - 50</span>
+                </div>
+                <div class="aqi-level-box" style="background-color: #84cc16; color: #0f172a;">
+                    <span class="aqi-label">Good</span>
+                    <span class="aqi-range">51 - 100</span>
+                </div>
+                <div class="aqi-level-box" style="background-color: #eab308; color: #0f172a;">
+                    <span class="aqi-label">Fair</span>
+                    <span class="aqi-range">101 - 150</span>
+                </div>
+                <div class="aqi-level-box" style="background-color: #f97316; color: #ffffff;">
+                    <span class="aqi-label">Poor</span>
+                    <span class="aqi-range">151 - 200</span>
+                </div>
+                <div class="aqi-level-box" style="background-color: #ef4444; color: #ffffff;">
+                    <span class="aqi-label">Very Poor</span>
+                    <span class="aqi-range">201 - 300</span>
+                </div>
+                <div class="aqi-level-box" style="background-color: #991b1b; color: #ffffff;">
+                    <span class="aqi-label">Hazardous</span>
+                    <span class="aqi-range">300+</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Graphical Pollutant Breakdown -->
+        <div class="pollutant-graph-panel">
+            <div class="section-title">
+                <i class="fas fa-chart-bar"></i> Real-Time Graphical Breakdown of Pollutants
+            </div>
+            <div class="pollutant-chart-box">
+                <canvas id="pollutantChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Data Source Card -->
+        <div class="source-card">
+            <span>Data provided by <strong>ESP32 Sensor Hardware & Machine Learning Models</strong></span>
+            <i class="fas fa-microchip"></i>
+        </div>
+
+        <!-- Hourly Forecast Section -->
+        <div class="section-title">
+            <i class="fas fa-clock"></i> Hourly Forecast (Nigeria Time)
+        </div>
+        <div class="hourly-container">
+            <div class="hourly-flex" id="hourlyForecastBox">
+                <div class="hourly-item">
+                    <span class="hourly-time">Now</span>
+                    <span class="hourly-badge" id="hf0">49</span>
+                    <i class="fas fa-cloud hourly-icon"></i>
+                    <span class="hourly-temp" id="ht0">28°</span>
+                </div>
+                <div class="hourly-item">
+                    <span class="hourly-time" id="htime1">--:--</span>
+                    <span class="hourly-badge" id="hf1">48</span>
+                    <i class="fas fa-cloud hourly-icon"></i>
+                    <span class="hourly-temp" id="ht1">28°</span>
+                </div>
+                <div class="hourly-item">
+                    <span class="hourly-time" id="htime2">--:--</span>
+                    <span class="hourly-badge" id="hf2">47</span>
+                    <i class="fas fa-cloud hourly-icon"></i>
+                    <span class="hourly-temp" id="ht2">27°</span>
+                </div>
+                <div class="hourly-item">
+                    <span class="hourly-time" id="htime3">--:--</span>
+                    <span class="hourly-badge" id="hf3">46</span>
+                    <i class="fas fa-cloud hourly-icon"></i>
+                    <span class="hourly-temp" id="ht3">27°</span>
+                </div>
+                <div class="hourly-item">
+                    <span class="hourly-time" id="htime4">--:--</span>
+                    <span class="hourly-badge" id="hf4">45</span>
+                    <i class="fas fa-cloud hourly-icon"></i>
+                    <span class="hourly-temp" id="ht4">26°</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Hardware Sensor Readings -->
+        <div class="section-title">
+            <i class="fas fa-sliders-h"></i> Live Hardware Sensor Readings
+        </div>
+        <div class="parameters-grid">
+            <div class="param-card">
+                <div class="param-header"><span class="param-title">PM2.5</span> <i class="fas fa-smog icon"></i></div>
+                <p class="param-value" id="pm25">--</p>
+                <span class="param-unit">µg/m³</span>
+            </div>
+            <div class="param-card">
+                <div class="param-header"><span class="param-title">PM10</span> <i class="fas fa-cloud icon"></i></div>
+                <p class="param-value" id="pm10">--</p>
+                <span class="param-unit">µg/m³</span>
+            </div>
+            <div class="param-card">
+                <div class="param-header"><span class="param-title">CO (Monoxide)</span> <i class="fas fa-industry icon"></i></div>
+                <p class="param-value" id="co">--</p>
+                <span class="param-unit">ppm</span>
+            </div>
+            <div class="param-card">
+                <div class="param-header"><span class="param-title">CO₂ (Dioxide)</span> <i class="fas fa-leaf icon"></i></div>
+                <p class="param-value" id="co2">--</p>
+                <span class="param-unit">ppm</span>
+            </div>
+            <div class="param-card">
+                <div class="param-header"><span class="param-title">Temperature</span> <i class="fas fa-temperature-high icon"></i></div>
+                <p class="param-value" id="temperature">--</p>
+                <span class="param-unit">°C</span>
+            </div>
+            <div class="param-card">
+                <div class="param-header"><span class="param-title">Humidity</span> <i class="fas fa-tint icon"></i></div>
+                <p class="param-value" id="humidity">--</p>
+                <span class="param-unit">%</span>
+            </div>
+            <div class="param-card">
+                <div class="param-header"><span class="param-title">Pressure</span> <i class="fas fa-compress-arrows-alt icon"></i></div>
+                <p class="param-value" id="pressure">--</p>
+                <span class="param-unit">hPa</span>
+            </div>
+            <div class="param-card" style="border: 1px solid #38bdf8;">
+                <div class="param-header"><span class="param-title" style="color:#38bdf8;">AI Classification</span> <i class="fas fa-brain icon"></i></div>
+                <p class="param-value" id="ai_prediction" style="font-size: 1.15rem; color: #4ade80;">Analyzing...</p>
+                <span class="param-unit" id="ai_aqi_index">AQI Evaluation</span>
+            </div>
+        </div>
+
+        <!-- Telemetry Trends & AI Performance -->
+        <div class="dashboard-row">
+            <div class="panel-card">
+                <div class="section-title" style="margin-bottom:0.5rem;">
+                    <i class="fas fa-chart-line"></i> Historical Telemetry Trends
+                </div>
+                <div class="chart-box">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+
+            <div class="panel-card">
+                <div class="section-title" style="margin-bottom:0.5rem;">
+                    <i class="fas fa-balance-scale"></i> ML Model Comparison
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="metrics-table">
+                        <thead>
+                            <tr>
+                                <th>Metric</th>
+                                <th>Random Forest</th>
+                                <th>Decision Tree</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Accuracy</strong></td>
+                                <td class="val-rf">96.8%</td>
+                                <td class="val-dt">92.4%</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Precision</strong></td>
+                                <td class="val-rf">95.9%</td>
+                                <td class="val-dt">91.5%</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Recall</strong></td>
+                                <td class="val-rf">96.2%</td>
+                                <td class="val-dt">92.0%</td>
+                            </tr>
+                            <tr>
+                                <td><strong>F1-Score</strong></td>
+                                <td class="val-rf">96.0%</td>
+                                <td class="val-dt">91.7%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
