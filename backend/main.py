@@ -7,19 +7,16 @@ from fastapi.responses import StreamingResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from sqlalchemy import desc  # <-- Fixed line 10 here
+from sqlalchemy import desc
+
+# Database and Schema imports
+from backend.database import Base, engine, get_db
+from backend.models import AirQualityReading
+from backend.schemas import AirQualityCreate, AirQualityResponse
 
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="IoT Air Quality Monitoring API", version="1.0")
-
-if os.path.exists("frontend"):
-    app.mount("/static", StaticFiles(directory="frontend"), name="static")
-
-@app.get("/")
-def read_root():
-    return FileResponse("frontend/index.html")
-    return FileResponse("frontend/index.html")
 
 app.add_middleware(
     CORSMiddleware,
@@ -28,6 +25,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+if os.path.exists("frontend"):
+    app.mount("/static", StaticFiles(directory="frontend"), name="static")
+
+@app.get("/")
+def read_root():
+    return FileResponse("frontend/index.html")
 
 # Define West Africa Time (WAT = UTC+1)
 WAT = timezone(timedelta(hours=1))
