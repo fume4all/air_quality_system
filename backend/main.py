@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
-from database import Base, engine, get_db
+from backend.database import Base, engine, get_db
 from models import AirQualityReading
 from schemas import AirQualityCreate, AirQualityResponse
 
