@@ -141,10 +141,11 @@ def export_csv(db: Session = Depends(get_db)):
     output = io.StringIO()
     writer = csv.writer(output)
     
+    # Separate Date and Time headers
     writer.writerow([
         "ID", "Device ID", "PM2.5 (ug/m3)", "PM10 (ug/m3)", "CO (ppm)", 
         "CO2 (ppm)", "Temperature", "Humidity", "Pressure (hPa)", 
-        "Date (WAT)", "Air_Pollution_Level"
+        "Date (WAT)", "Time (WAT)", "Air_Pollution_Level"
     ])
     
     for r in readings:
@@ -153,9 +154,15 @@ def export_csv(db: Session = Depends(get_db)):
         
         dt_raw = getattr(r, "created_at", getattr(r, "timestamp", None))
         if isinstance(dt_raw, datetime):
-            ts_str = dt_raw.strftime("%Y-%m-%d %H:%M:%S")
+            if dt_raw.tzinfo is None:
+                dt_raw = dt_raw.replace(tzinfo=WAT)
+            else:
+                dt_raw = dt_raw.astimezone(WAT)
+            date_str = dt_raw.strftime("%Y-%m-%d")
+            time_str = dt_raw.strftime("%H:%M:%S")
         else:
-            ts_str = str(dt_raw) if dt_raw else ""
+            date_str = str(dt_raw) if dt_raw else ""
+            time_str = ""
         
         writer.writerow([
             getattr(r, "id", ""),
@@ -167,7 +174,8 @@ def export_csv(db: Session = Depends(get_db)):
             getattr(r, "temperature", 0),
             getattr(r, "humidity", 0),
             getattr(r, "pressure", 0),
-            ts_str,
+            date_str,
+            time_str,
             aqi_level
         ])
         
