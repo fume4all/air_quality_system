@@ -1,19 +1,25 @@
 import csv
 import io
+import os  
 from datetime import datetime, timezone, timedelta
 from fastapi import FastAPI, Depends
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from sqlalchemy import desc
-
-from backend.database import Base, engine, get_db
-from backend.models import AirQualityReading
-from backend.schemas import AirQualityCreate, AirQualityResponse
+from sqlalchemy import desc  # <-- Fixed line 10 here
 
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="IoT Air Quality Monitoring API", version="1.0")
+
+if os.path.exists("frontend"):
+    app.mount("/static", StaticFiles(directory="frontend"), name="static")
+
+@app.get("/")
+def read_root():
+    return FileResponse("frontend/index.html")
+    return FileResponse("frontend/index.html")
 
 app.add_middleware(
     CORSMiddleware,
