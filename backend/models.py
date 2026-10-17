@@ -1,6 +1,6 @@
 from datetime import datetime, timezone, timedelta
 from sqlalchemy import Column, Integer, Float, String, DateTime
-from database import Base
+from backend.database import Base
 
 # West Africa Time (WAT = UTC+1)
 WAT = timezone(timedelta(hours=1))
