@@ -76,10 +76,14 @@ def receive_telemetry(data: AirQualityCreate, db: Session = Depends(get_db)):
     clean_device_id = data.device_id
     if not clean_device_id or clean_device_id.strip().lower() == "string":
         clean_device_id = "ESP32_SENSOR_01"
-
+    
     now_wat = datetime.now(WAT)
+    
+    # Calculate AQI and status level based on incoming PM2.5
+    pm25_val = data.pm25 if data.pm25 is not None else 0.0
+    aqi_val, aqi_level = calculate_aqi_level(pm25_val)
 
-    reading = AirQualityReading(
+    reading = models.AirQualityReading(
         device_id=clean_device_id,
         pm25=data.pm25,
         pm10=data.pm10,
@@ -88,12 +92,15 @@ def receive_telemetry(data: AirQualityCreate, db: Session = Depends(get_db)):
         temperature=data.temperature,
         humidity=data.humidity,
         pressure=data.pressure,
+        aqi=int(aqi_val),
+        aqi_level=aqi_level,
         created_at=now_wat
     )
-
+    
     db.add(reading)
     db.commit()
     db.refresh(reading)
+    return reading
 
     aqi_val, aqi_level = calculate_aqi_level(reading.pm25)
 
@@ -107,16 +114,14 @@ def receive_telemetry(data: AirQualityCreate, db: Session = Depends(get_db)):
 
 
 @app.get("/telemetry")
-def get_all_data(db: Session = Depends(get_db)):
-    readings = db.query(AirQualityReading).order_by(desc(AirQualityReading.created_at)).limit(100).all()
+def get_telemetry(db: Session = Depends(get_db)):
+    readings = db.query(models.AirQualityReading).order_by(models.AirQualityReading.id.asc()).all()
+    
     result = []
     for r in readings:
-        aqi_val, aqi_level = calculate_aqi_level(r.pm25)
+        pm25_val = getattr(r, "pm25", 0.0) or 0.0
+        calc_aqi, calc_level = calculate_aqi_level(pm25_val)
         
-        # Explicitly format timestamp with WAT timezone
-        dt_raw = getattr(r, "created_at", getattr(r, "timestamp", None))
-        formatted_ts = format_wat_timestamp(dt_raw)
-
         result.append({
             "id": r.id,
             "device_id": r.device_id,
@@ -127,9 +132,9 @@ def get_all_data(db: Session = Depends(get_db)):
             "temperature": r.temperature,
             "humidity": r.humidity,
             "pressure": r.pressure,
-            "created_at": formatted_ts,
-            "aqi": aqi_val,
-            "aqi_level": aqi_level
+            "aqi": r.aqi if r.aqi is not None else int(calc_aqi),
+            "aqi_level": r.aqi_level if r.aqi_level else calc_level,
+            "created_at": r.created_at.isoformat() if r.created_at else None
         })
     return result
 
