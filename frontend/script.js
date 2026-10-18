@@ -38,7 +38,7 @@ function initCharts() {
         }
     });
 
-    // Historical Telemetry Trends Line Chart (Includes PM10, CO, CO2, PM2.5, AQI, Temp)
+    // Historical Telemetry Trends Line Chart (Includes AQI, PM2.5, PM10, CO, CO2, Temp, Pressure)
     const ctxTrend = document.getElementById('trendChart').getContext('2d');
     trendChart = new Chart(ctxTrend, {
         type: 'line',
@@ -50,13 +50,14 @@ function initCharts() {
                 { label: 'PM10', data: [], borderColor: '#818cf8', tension: 0.3, fill: false },
                 { label: 'CO', data: [], borderColor: '#facc15', tension: 0.3, fill: false },
                 { label: 'CO₂', data: [], borderColor: '#34d399', tension: 0.3, fill: false },
-                { label: 'Temperature (°C)', data: [], borderColor: '#ef4444', tension: 0.3, fill: false }
+                { label: 'Temperature (°C)', data: [], borderColor: '#ef4444', tension: 0.3, fill: false },
+                { label: 'Pressure (hPa)', data: [], borderColor: '#a855f7', tension: 0.3, fill: false, hidden: true }
             ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { labels: { color: '#cbd5e1', boxWidth: 12, font: { size: 11 } } } },
+            plugins: { legend: { labels: { color: '#cbd5e1', boxWidth: 12, font: { size: 10 } } } },
             scales: {
                 y: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
                 x: { ticks: { color: '#cbd5e1' }, grid: { display: false } }
@@ -77,7 +78,7 @@ async function fetchTelemetryData() {
         if (data && data.length > 0) {
             const latest = data[data.length - 1];
 
-            // Update Header Meta (Formatted strictly to Africa/Lagos WAT Time)
+            // Update Header Meta (Strictly formatted to Africa/Lagos WAT Time)
             document.getElementById("device_id").innerText = latest.device_id || "ESP32_SENSOR_01";
             const timestampObj = new Date(latest.created_at || Date.now());
             document.getElementById("timestamp").innerText = timestampObj.toLocaleTimeString('en-GB', {
@@ -107,7 +108,7 @@ async function fetchTelemetryData() {
             pollutantChart.data.datasets[0].data = [latest.pm25 || 0, latest.pm10 || 0, latest.co || 0, latest.co2 || 0];
             pollutantChart.update();
 
-            // Update Historical Telemetry Trends Line Chart
+            // Update Historical Telemetry Trends Line Chart (Last 10 Records)
             const recentData = data.slice(-10);
             trendChart.data.labels = recentData.map(r => new Date(r.created_at || Date.now()).toLocaleTimeString('en-GB', {
                 timeZone: 'Africa/Lagos',
@@ -122,6 +123,7 @@ async function fetchTelemetryData() {
             trendChart.data.datasets[3].data = recentData.map(r => r.co || 0);
             trendChart.data.datasets[4].data = recentData.map(r => r.co2 || 0);
             trendChart.data.datasets[5].data = recentData.map(r => r.temperature || 0);
+            trendChart.data.datasets[6].data = recentData.map(r => r.pressure || 0);
             trendChart.update();
 
             // Update Hourly Forecast Section
