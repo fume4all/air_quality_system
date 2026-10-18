@@ -104,14 +104,20 @@ async function fetchTelemetryData() {
             pollutantChart.data.datasets[0].data = [latest.pm25, latest.pm10, latest.co, latest.co2];
             pollutantChart.update();
 
-            // Update Trend Line Chart (Last 10 Records)
+            // Update Trend Line Chart (Last 10 Records with safe fallbacks)
             const recentData = data.slice(-10);
-            trendChart.data.labels = recentData.map(r => new Date(r.created_at).toLocaleTimeString('en-GB', {
+            trendChart.data.labels = recentData.map(r => new Date(r.created_at || Date.now()).toLocaleTimeString('en-GB', {
                 timeZone: 'Africa/Lagos',
                 hour: '2-digit',
                 minute: '2-digit',
                 hour12: true
             }));
+            
+            // Map values safely (calculating AQI from PM2.5 if r.aqi is missing)
+            trendChart.data.datasets[0].data = recentData.map(r => r.aqi !== undefined ? r.aqi : (r.pm25 ? (50 / 12.0) * r.pm25 : 0));
+            trendChart.data.datasets[1].data = recentData.map(r => r.pm25 || 0);
+            trendChart.data.datasets[2].data = recentData.map(r => r.temperature || 0);
+            trendChart.update();
 
             // Update Hourly Forecast Section
             const now = new Date();
