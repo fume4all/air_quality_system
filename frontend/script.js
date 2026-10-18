@@ -78,7 +78,7 @@ async function fetchTelemetryData() {
         if (data && data.length > 0) {
             const latest = data[data.length - 1];
 
-            // Update Header Meta (Formatted to Nigeria Date and Time)
+            // Update Header Meta (Strictly formatted to Nigeria Date and 24-Hour Time)
             document.getElementById("device_id").innerText = latest.device_id || "ESP32_SENSOR_01";
             
             const timestampObj = new Date(latest.created_at || Date.now());
@@ -91,8 +91,10 @@ async function fetchTelemetryData() {
                 hour: '2-digit',
                 minute: '2-digit',
                 second: '2-digit',
-                hour12: true
+                hour12: false // 24-hour format
             });
+
+            document.getElementById("timestamp").innerText = nigeriaDateTimeStr;
 
             document.getElementById("timestamp").innerText = nigeriaDateTimeStr;
             // Update Parameters Grid
