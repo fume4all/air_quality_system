@@ -78,17 +78,23 @@ async function fetchTelemetryData() {
         if (data && data.length > 0) {
             const latest = data[data.length - 1];
 
-            // Update Header Meta (Strictly formatted to Africa/Lagos WAT Time)
+            // Update Header Meta (Formatted to Nigeria Date and Time)
             document.getElementById("device_id").innerText = latest.device_id || "ESP32_SENSOR_01";
+            
             const timestampObj = new Date(latest.created_at || Date.now());
-            document.getElementById("timestamp").innerText = timestampObj.toLocaleTimeString('en-GB', {
+            const nigeriaDateTimeStr = timestampObj.toLocaleString('en-GB', {
                 timeZone: 'Africa/Lagos',
+                weekday: 'short',
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
                 hour: '2-digit',
                 minute: '2-digit',
                 second: '2-digit',
                 hour12: true
             });
 
+            document.getElementById("timestamp").innerText = nigeriaDateTimeStr;
             // Update Parameters Grid
             document.getElementById("pm25").innerText = latest.pm25 ?? '--';
             document.getElementById("pm10").innerText = latest.pm10 ?? '--';
