@@ -1,22 +1,13 @@
-import csv
-import io
-import os  
-from datetime import datetime, timezone, timedelta
-from fastapi import FastAPI, Depends
-from fastapi.responses import StreamingResponse, FileResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.middleware.cors import CORSMiddleware
+from datetime import datetime
+import pytz
 from sqlalchemy.orm import Session
-from sqlalchemy import desc
+from fastapi import FastAPI, Depends, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from database import get_db
+import models
+import schemas
 
-# Database and Schema imports
-from backend.database import Base, engine, get_db
-from backend.models import AirQualityReading
-from backend.schemas import AirQualityCreate, AirQualityResponse
-
-Base.metadata.create_all(bind=engine)
-
-app = FastAPI(title="IoT Air Quality Monitoring API", version="1.0")
+app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
@@ -26,60 +17,36 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-if os.path.exists("frontend"):
-    app.mount("/static", StaticFiles(directory="frontend"), name="static")
-
-@app.get("/")
-def read_root():
-    return FileResponse("frontend/index.html")
-
-# Define West Africa Time (WAT = UTC+1)
-WAT = timezone(timedelta(hours=1))
-
+WAT = pytz.timezone("Africa/Lagos")
 
 def calculate_aqi_level(pm25: float):
     if pm25 is None:
-        return 0, "Unknown"
+        return 50, "Good"
     if pm25 <= 12.0:
         aqi = (50 / 12.0) * pm25
-        level = "Very Good"
-    elif pm25 <= 35.4:
-        aqi = 50 + ((50 / 23.4) * (pm25 - 12.0))
         level = "Good"
-    elif pm25 <= 55.4:
-        aqi = 100 + ((50 / 20.0) * (pm25 - 35.4))
+    elif pm25 <= 35.4:
+        aqi = 50 + ((100 - 50) / (35.4 - 12.1)) * (pm25 - 12.1)
         level = "Fair"
-    elif pm25 <= 150.4:
-        aqi = 150 + ((50 / 95.0) * (pm25 - 55.4))
+    elif pm25 <= 55.4:
+        aqi = 101 + ((150 - 101) / (55.4 - 35.5)) * (pm25 - 35.5)
         level = "Poor"
-    elif pm25 <= 250.4:
-        aqi = 200 + ((100 / 100.0) * (pm25 - 150.4))
+    elif pm25 <= 150.4:
+        aqi = 151 + ((200 - 151) / (150.4 - 55.5)) * (pm25 - 55.5)
         level = "Very Poor"
     else:
-        aqi = 300 + ((200 / 249.6) * (pm25 - 250.4))
+        aqi = 300
         level = "Hazardous"
-    
-    return int(aqi), level
-
-
-def format_wat_timestamp(dt_obj):
-    """Ensures datetime object carries the explicit +01:00 offset for WAT."""
-    if not dt_obj:
-        dt_obj = datetime.now(WAT)
-    if dt_obj.tzinfo is None:
-        dt_obj = dt_obj.replace(tzinfo=WAT)
-    return dt_obj.isoformat()
-
+    return int(round(aqi)), level
 
 @app.post("/telemetry")
-def receive_telemetry(data: AirQualityCreate, db: Session = Depends(get_db)):
+def receive_telemetry(data: schemas.AirQualityCreate, db: Session = Depends(get_db)):
     clean_device_id = data.device_id
     if not clean_device_id or clean_device_id.strip().lower() == "string":
         clean_device_id = "ESP32_SENSOR_01"
     
     now_wat = datetime.now(WAT)
     
-    # Calculate AQI and status level based on incoming PM2.5
     pm25_val = data.pm25 if data.pm25 is not None else 0.0
     aqi_val, aqi_level = calculate_aqi_level(pm25_val)
 
@@ -101,17 +68,6 @@ def receive_telemetry(data: AirQualityCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(reading)
     return reading
-
-    aqi_val, aqi_level = calculate_aqi_level(reading.pm25)
-
-    return {
-        "message": "Data received successfully",
-        "id": reading.id,
-        "created_at": format_wat_timestamp(reading.created_at),
-        "aqi": aqi_val,
-        "aqi_level": aqi_level
-    }
-
 
 @app.get("/telemetry")
 def get_telemetry(db: Session = Depends(get_db)):
@@ -137,56 +93,3 @@ def get_telemetry(db: Session = Depends(get_db)):
             "created_at": r.created_at.isoformat() if r.created_at else None
         })
     return result
-
-
-@app.get("/export-csv")
-def export_csv(db: Session = Depends(get_db)):
-    readings = db.query(AirQualityReading).order_by(AirQualityReading.id.asc()).all()
-    
-    output = io.StringIO()
-    writer = csv.writer(output)
-    
-    # Separate Date and Time headers
-    writer.writerow([
-        "ID", "Device ID", "PM2.5 (ug/m3)", "PM10 (ug/m3)", "CO (ppm)", 
-        "CO2 (ppm)", "Temperature", "Humidity", "Pressure (hPa)", 
-        "Date (WAT)", "Time (WAT)", "Air_Pollution_Level"
-    ])
-    
-    for r in readings:
-        pm25_val = getattr(r, "pm25", 0)
-        aqi_val, aqi_level = calculate_aqi_level(pm25_val)
-        
-        dt_raw = getattr(r, "created_at", getattr(r, "timestamp", None))
-        if isinstance(dt_raw, datetime):
-            if dt_raw.tzinfo is None:
-                dt_raw = dt_raw.replace(tzinfo=WAT)
-            else:
-                dt_raw = dt_raw.astimezone(WAT)
-            date_str = dt_raw.strftime("%Y-%m-%d")
-            time_str = dt_raw.strftime("%H:%M:%S")
-        else:
-            date_str = str(dt_raw) if dt_raw else ""
-            time_str = ""
-        
-        writer.writerow([
-            getattr(r, "id", ""),
-            getattr(r, "device_id", ""),
-            pm25_val,
-            getattr(r, "pm10", 0),
-            getattr(r, "co", 0),
-            getattr(r, "co2", 0),
-            getattr(r, "temperature", 0),
-            getattr(r, "humidity", 0),
-            getattr(r, "pressure", 0),
-            date_str,
-            time_str,
-            aqi_level
-        ])
-        
-    output.seek(0)
-    return StreamingResponse(
-        iter([output.getvalue()]),
-        media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=Air_Quality_Dataset.csv"}
-    )
