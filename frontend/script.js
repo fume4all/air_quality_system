@@ -170,3 +170,50 @@ window.addEventListener("DOMContentLoaded", () => {
     fetchTelemetryData();
     setInterval(fetchTelemetryData, 15000); // Refresh every 15 seconds
 });
+// Function to export your live dashboard data into a CSV file instantly
+function downloadCSV(event) {
+    if (event) event.preventDefault();
+    
+    // Check if we have data loaded
+    if (!window.latestTelemetryData || window.latestTelemetryData.length === 0) {
+        alert("Data is still loading or unavailable. Please wait a second and try again.");
+        return;
+    }
+
+    const headers = ["id", "device_id", "pm25", "pm10", "co", "co2", "temperature", "humidity", "pressure", "aqi", "aqi_level", "created_at"];
+    let csvContent = headers.join(",") + "\n";
+
+    window.latestTelemetryData.forEach(row => {
+        const values = headers.map(header => {
+            let val = row[header] !== undefined && row[header] !== null ? row[header] : "";
+            return `"${val}"`;
+        });
+        csvContent += values.join(",") + "\n";
+    });
+
+    // Create a secure download link in the browser
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Air_Quality_Dataset.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+// Automatically attach this function to your "Download Dataset (CSV)" button/link
+document.addEventListener("click", function(e) {
+    if (e.target && e.target.textContent.includes("Download Dataset")) {
+        downloadCSV(e);
+    }
+});
+
+// Automatically fetch and store telemetry data for the CSV download button
+fetch("https://air-quality-system-r8np.onrender.com/telemetry")
+  .then(response => response.json())
+  .then(data => {
+      window.latestTelemetryData = data;
+  })
+  .catch(err => console.error("Error loading telemetry data:", err));
