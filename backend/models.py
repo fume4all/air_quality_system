@@ -17,6 +17,8 @@ class AirQualityReading(Base):
     temperature = Column(Float, nullable=True)
     humidity = Column(Float, nullable=True)
     pressure = Column(Float, nullable=True)
-    aqi = Column(Integer, nullable=True)       # <-- Ensure this is present
-    aqi_level = Column(String, nullable=True)  # <-- Ensure this is present
+    aqi = Column(Integer, nullable=True)
+    aqi_level = Column(String, nullable=True)
+    date = Column(String, nullable=True)  # <-- Added Date column
+    time = Column(String, nullable=True)  # <-- Added Time column
     created_at = Column(DateTime, default=lambda: datetime.now(WAT))
