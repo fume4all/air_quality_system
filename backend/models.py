@@ -1,21 +1,22 @@
-from datetime import datetime, timezone, timedelta
 from sqlalchemy import Column, Integer, Float, String, DateTime
-from backend.database import Base
+from datetime import datetime
+import pytz
+from .database import Base
 
-# West Africa Time (WAT = UTC+1)
-WAT = timezone(timedelta(hours=1))
+WAT = pytz.timezone("Africa/Lagos")
 
 class AirQualityReading(Base):
     __tablename__ = "air_quality_readings"
 
     id = Column(Integer, primary_key=True, index=True)
-    device_id = Column(String(50), index=True)
-    pm25 = Column(Float)
-    pm10 = Column(Float)
-    co = Column(Float)
-    co2 = Column(Float)
-    temperature = Column(Float)
-    humidity = Column(Float)
-    pressure = Column(Float)
-    # Automatically records full Date & Time (e.g., 2026-10-03 13:10:05)
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(WAT))
+    device_id = Column(String, default="ESP32_SENSOR_01")
+    pm25 = Column(Float, nullable=True)
+    pm10 = Column(Float, nullable=True)
+    co = Column(Float, nullable=True)
+    co2 = Column(Float, nullable=True)
+    temperature = Column(Float, nullable=True)
+    humidity = Column(Float, nullable=True)
+    pressure = Column(Float, nullable=True)
+    aqi = Column(Integer, nullable=True)       # <-- Ensure this is present
+    aqi_level = Column(String, nullable=True)  # <-- Ensure this is present
+    created_at = Column(DateTime, default=lambda: datetime.now(WAT))
