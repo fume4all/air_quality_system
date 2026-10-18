@@ -234,17 +234,7 @@ function downloadCSV(event) {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 }
-    // Create a secure download link in the browser
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Air_Quality_Dataset.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-}
+    
 
 // Automatically attach this function to your "Download Dataset (CSV)" button/link
 document.addEventListener("click", function(e) {
