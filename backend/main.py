@@ -77,18 +77,22 @@ def get_telemetry(db: Session = Depends(get_db)):
         pm25_val = getattr(r, "pm25", 0.0) or 0.0
         calc_aqi, calc_level = calculate_aqi_level(pm25_val)
         
+        # Safely check for columns to prevent server errors if columns don't exist yet
+        r_aqi = getattr(r, "aqi", None)
+        r_aqi_level = getattr(r, "aqi_level", None)
+        
         result.append({
-            "id": r.id,
-            "device_id": r.device_id,
-            "pm25": r.pm25,
-            "pm10": r.pm10,
-            "co": r.co,
-            "co2": r.co2,
-            "temperature": r.temperature,
-            "humidity": r.humidity,
-            "pressure": r.pressure,
-            "aqi": r.aqi if r.aqi is not None else int(calc_aqi),
-            "aqi_level": r.aqi_level if r.aqi_level else calc_level,
-            "created_at": r.created_at.isoformat() if r.created_at else None
+            "id": getattr(r, "id", None),
+            "device_id": getattr(r, "device_id", "ESP32_SENSOR_01"),
+            "pm25": getattr(r, "pm25", None),
+            "pm10": getattr(r, "pm10", None),
+            "co": getattr(r, "co", None),
+            "co2": getattr(r, "co2", None),
+            "temperature": getattr(r, "temperature", None),
+            "humidity": getattr(r, "humidity", None),
+            "pressure": getattr(r, "pressure", None),
+            "aqi": r_aqi if r_aqi is not None else int(calc_aqi),
+            "aqi_level": r_aqi_level if r_aqi_level else calc_level,
+            "created_at": r.created_at.isoformat() if getattr(r, "created_at", None) else None
         })
     return result
