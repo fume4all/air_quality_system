@@ -17,6 +17,17 @@ app.add_middleware(
 )
 
 WAT = pytz.timezone("Africa/Lagos")
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+import os
+
+# Mount frontend directory
+if os.path.exists("frontend"):
+    app.mount("/static", StaticFiles(directory="frontend"), name="static")
+
+    @app.get("/")
+    def serve_dashboard():
+        return FileResponse(os.path.join("frontend", "index.html"))
 
 def calculate_aqi_level(pm25: float):
     if pm25 is None:
