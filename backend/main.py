@@ -8,6 +8,20 @@ from . import models, schemas
 
 app = FastAPI()
 
+from sqlalchemy import text
+
+@app.on_event("startup")
+def run_migrations():
+    try:
+        from backend.database import SessionLocal
+        db = SessionLocal()
+        db.execute(text("ALTER TABLE air_quality_readings ADD COLUMN IF NOT EXISTS aqi INTEGER;"))
+        db.execute(text("ALTER TABLE air_quality_readings ADD COLUMN IF NOT EXISTS aqi_level VARCHAR;"))
+        db.commit()
+        db.close()
+    except Exception as e:
+        print("Migration check note:", e)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
