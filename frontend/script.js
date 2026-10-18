@@ -170,27 +170,70 @@ window.addEventListener("DOMContentLoaded", () => {
     fetchTelemetryData();
     setInterval(fetchTelemetryData, 15000); // Refresh every 15 seconds
 });
-// Function to export your live dashboard data into a CSV file instantly
 function downloadCSV(event) {
     if (event) event.preventDefault();
     
-    // Check if we have data loaded
     if (!window.latestTelemetryData || window.latestTelemetryData.length === 0) {
-        alert("Data is still loading or unavailable. Please wait a second and try again.");
+        alert("Data is loading or unavailable. Please try again in a moment.");
         return;
     }
 
-    const headers = ["id", "device_id", "pm25", "pm10", "co", "co2", "temperature", "humidity", "pressure", "aqi", "aqi_level", "created_at"];
+    const headers = [
+        "id", "device_id", "pm25", "pm10", "co", "co2", 
+        "temperature", "humidity", "pressure", "aqi", "aqi_level", "date", "time"
+    ];
     let csvContent = headers.join(",") + "\n";
 
     window.latestTelemetryData.forEach(row => {
+        let dateStr = "";
+        let timeStr = "";
+
+        const rawTimestamp = row.created_at || row.timestamp;
+
+        if (rawTimestamp) {
+            const dt = new Date(rawTimestamp);
+            if (!isNaN(dt.getTime())) {
+                // Convert to West Africa Time (WAT, GMT+1)
+                const watDate = new Date(dt.getTime() + (1 * 60 * 60 * 1000));
+                
+                const day = String(watDate.getUTCDate()).padStart(2, '0');
+                const month = String(watDate.getUTCMonth() + 1).padStart(2, '0');
+                const year = String(watDate.getUTCFullYear()).slice(-2);
+                dateStr = `${day}-${month}-${year}`;
+
+                const hours = String(watDate.getUTCHours()).padStart(2, '0');
+                const minutes = String(watDate.getUTCMinutes()).padStart(2, '0');
+                const seconds = String(watDate.getUTCSeconds()).padStart(2, '0');
+                timeStr = `${hours}:${minutes}:${seconds}`;
+            }
+        } else {
+            dateStr = row.date || "";
+            timeStr = row.time || "";
+        }
+
+        const formattedRow = {
+            ...row,
+            date: dateStr,
+            time: timeStr
+        };
+
         const values = headers.map(header => {
-            let val = row[header] !== undefined && row[header] !== null ? row[header] : "";
+            let val = formattedRow[header] !== undefined && formattedRow[header] !== null ? formattedRow[header] : "";
             return `"${val}"`;
         });
         csvContent += values.join(",") + "\n";
     });
 
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Air_Quality_Dataset.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
     // Create a secure download link in the browser
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
