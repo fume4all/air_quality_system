@@ -76,9 +76,16 @@ async function fetchTelemetryData() {
 
             // Update Header Meta
             document.getElementById("device_id").innerText = latest.device_id || "ESP32_SENSOR_01";
-            document.getElementById("timestamp").innerText = new Date(latest.created_at || Date.now()).toLocaleTimeString();
-
-            // Update Parameters Grid
+            // Update Header Meta (Fixed to Nigeria Lagos Local Time)
+            document.getElementById("device_id").innerText = latest.device_id || "ESP32_SENSOR_01";
+            const timestampObj = new Date(latest.created_at || Date.now());
+            document.getElementById("timestamp").innerText = timestampObj.toLocaleTimeString('en-GB', {
+                timeZone: 'Africa/Lagos',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true
+            });
             document.getElementById("pm25").innerText = latest.pm25;
             document.getElementById("pm10").innerText = latest.pm10;
             document.getElementById("co").innerText = latest.co;
@@ -99,11 +106,12 @@ async function fetchTelemetryData() {
 
             // Update Trend Line Chart (Last 10 Records)
             const recentData = data.slice(-10);
-            trendChart.data.labels = recentData.map(r => new Date(r.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-            trendChart.data.datasets[0].data = recentData.map(r => r.aqi);
-            trendChart.data.datasets[1].data = recentData.map(r => r.pm25);
-            trendChart.data.datasets[2].data = recentData.map(r => r.temperature);
-            trendChart.update();
+            trendChart.data.labels = recentData.map(r => new Date(r.created_at).toLocaleTimeString('en-GB', {
+                timeZone: 'Africa/Lagos',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            }));
 
             // Update Hourly Forecast Section
             const now = new Date();
