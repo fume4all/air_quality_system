@@ -50,34 +50,30 @@ def calculate_aqi_level(pm25: float):
     return int(round(aqi)), level
 
 @app.post("/telemetry")
-def receive_telemetry(data: schemas.AirQualityCreate, db: Session = Depends(get_db)):
-    clean_device_id = data.device_id
-    if not clean_device_id or clean_device_id.strip().lower() == "string":
-        clean_device_id = "ESP32_SENSOR_01"
-    
-    now_wat = datetime.now(WAT)
-    
-    pm25_val = data.pm25 if data.pm25 is not None else 0.0
-    aqi_val, aqi_level = calculate_aqi_level(pm25_val)
-
-    reading = models.AirQualityReading(
-        device_id=clean_device_id,
-        pm25=data.pm25,
-        pm10=data.pm10,
-        co=data.co,
-        co2=data.co2,
-        temperature=data.temperature,
-        humidity=data.humidity,
-        pressure=data.pressure,
-        aqi=int(aqi_val),
-        aqi_level=aqi_level,
-        created_at=now_wat
-    )
-    
-    db.add(reading)
-    db.commit()
-    db.refresh(reading)
-    return reading
+def receive_telemetry(payload: dict, db: Session = Depends(get_db)):
+    try:
+        pm25_val = float(payload.get("pm25", 0.0) or 0.0)
+        calc_aqi, calc_level = calculate_aqi_level(pm25_val)
+        
+        db_reading = models.AirQualityReading(
+            device_id=payload.get("device_id", "ESP32_SENSOR_01"),
+            pm25=payload.get("pm25"),
+            pm10=payload.get("pm10"),
+            co=payload.get("co"),
+            co2=payload.get("co2"),
+            temperature=payload.get("temperature"),
+            humidity=payload.get("humidity"),
+            pressure=payload.get("pressure"),
+            aqi=payload.get("aqi") if payload.get("aqi") is not None else int(calc_aqi),
+            aqi_level=payload.get("aqi_level") if payload.get("aqi_level") else calc_level
+        )
+        db.add(db_reading)
+        db.commit()
+        db.refresh(db_reading)
+        return {"status": "success", "message": "Telemetry saved successfully", "id": db_reading.id}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/telemetry")
 def get_telemetry(db: Session = Depends(get_db)):
