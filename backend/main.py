@@ -63,52 +63,12 @@ def calculate_aqi_level(pm25: float):
         aqi = 300
         level = "Hazardous"
     return int(round(aqi)), level
-
 @app.post("/telemetry")
 def receive_telemetry(data: schemas.AirQualityCreate, db: Session = Depends(get_db)):
     """
     Receive validated sensor telemetry from ESP32 or Swagger UI and store in MySQL.
     """
     try:
-        # Convert Pydantic model to dictionary
-        payload = data.dict()
-        
-        pm25_val = float(payload.get("pm25", 0.0) or 0.0)
-        calc_aqi, calc_level = calculate_aqi_level(pm25_val)
-        
-        db_reading = models.AirQualityReading(
-            device_id=payload.get("device_id", "ESP32_SENSOR_01"),
-            pm25=payload.get("pm25"),
-            pm10=payload.get("pm10"),
-            co=payload.get("co"),
-            co2=payload.get("co2"),
-            temperature=payload.get("temperature"),
-            humidity=payload.get("humidity"),
-            pressure=payload.get("pressure"),
-            aqi=int(calc_aqi),
-            aqi_level=calc_level
-        )
-        db.add(db_reading)
-        db.commit()
-        db.refresh(db_reading)
-        
-        return {
-            "status": "success",
-            "message": "Telemetry saved successfully",
-            "id": db_reading.id,
-            "calculated_aqi": calc_aqi,
-            "aqi_level": calc_level
-        }
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
-@app.post("/telemetry")
-def receive_telemetry(data: schemas.AirQualityCreate, db: Session = Depends(get_db)):
-    """
-    Receive validated sensor telemetry from ESP32 or Swagger UI and store in MySQL.
-    """
-    try:
-        # Convert Pydantic model to dictionary
         payload = data.dict()
         
         pm25_val = float(payload.get("pm25", 0.0) or 0.0)

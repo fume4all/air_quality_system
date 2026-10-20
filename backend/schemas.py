@@ -3,14 +3,14 @@ from datetime import datetime
 from typing import Optional
 
 class AirQualityCreate(BaseModel):
-   device_id: str = "ESP32_SENSOR_01"  # Default fallback instead of generic "string"
-   pm25: float
-   pm10: float
-   co: float
-   co2: float
-   temperature: float
-   humidity: float
-   pressure: float
+    device_id: str = "ESP32_SENSOR_01"
+    pm25: float
+    pm10: float
+    co: float
+    co2: float
+    temperature: float
+    humidity: float
+    pressure: float
 
 class AirQualityResponse(AirQualityCreate):
     id: int
