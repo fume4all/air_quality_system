@@ -1,24 +1,68 @@
-from fastapi import FastAPI
-from pydantic import BaseModel
+from fastapi import FastAPI, Depends, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.orm import Session
+from datetime import datetime
 
-app = FastAPI(title="FUTA Air Quality Monitoring API")
+# Root-level flat imports
+from database import SessionLocal, engine, Base
+from models import AirQualityReadings
+from schemas import AirQualityCreate
 
-# 1. Define the Pydantic Schema
-class AirQualityCreate(BaseModel):
-    device_id: str
-    pm25: float
-    pm10: float
-    co: float
-    co2: float
-    temperature: float
-    humidity: float
-    pressure: float
+# Automatically create database tables on startup if they don't exist
+Base.metadata.create_all(bind=engine)
 
-# 2. Ensure the POST route uses the schema (NOT dict)
+app = FastAPI(title="FUTA Air Quality Monitoring API", version="1.0.0")
+
+# Enable CORS for frontend and ESP32 hardware communication
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Dependency to get database session
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+@app.get("/")
+def serve_dashboard():
+    return {"message": "FUTA IoT Air Quality Monitoring Backend is Live!"}
+
 @app.post("/telemetry")
-def receive_telemetry(payload: AirQualityCreate):
-    return {
-        "status": "success", 
-        "message": "Telemetry received successfully",
-        "received_data": payload
-    }
+def receive_telemetry(payload: AirQualityCreate, db: Session = Depends(get_db)):
+    try:
+        db_reading = AirQualityReadings(
+            device_id=payload.device_id,
+            pm25=payload.pm25,
+            pm10=payload.pm10,
+            co=payload.co,
+            co2=payload.co2,
+            temperature=payload.temperature,
+            humidity=payload.humidity,
+            pressure=payload.pressure,
+            timestamp=datetime.utcnow()
+        )
+        db.add(db_reading)
+        db.commit()
+        db.refresh(db_reading)
+        return {
+            "status": "success",
+            "message": "Telemetry stored successfully",
+            "data": db_reading
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/telemetry")
+def get_latest_telemetry(db: Session = Depends(get_db)):
+    latest = db.query(AirQualityReadings).order_by(AirQualityReadings.id.desc()).first()
+    if not latest:
+        return {"message": "No telemetry data found"}
+    return latest
