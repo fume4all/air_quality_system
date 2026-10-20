@@ -1,4 +1,4 @@
-const API_BASE_URL = "https://airqualitysystem-production.up.railway.app";
+const API_URL = "https://airqualitysystem-production.up.railway.app";
 
 let pollutantChart, trendChart;
 
