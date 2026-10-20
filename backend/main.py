@@ -38,99 +38,78 @@ if os.path.exists("frontend"):
     def serve_dashboard():
         return FileResponse(os.path.join("frontend", "index.html"))
 
-
-from sqlalchemy import inspect, text
-from .database import engine
-from . import models
-
 @app.on_event("startup")
 def run_migrations():
     try:
-        models.Base.metadata.create_all(bind=engine)
+        db = SessionLocal()
+        db.execute(text("ALTER TABLE air_quality_readings ADD COLUMN IF NOT EXISTS aqi INTEGER;"))
+        db.execute(text("ALTER TABLE air_quality_readings ADD COLUMN IF NOT EXISTS aqi_level VARCHAR(50);"))
+        db.execute(text("ALTER TABLE air_quality_readings ADD COLUMN IF NOT EXISTS date VARCHAR(50);"))
+        db.execute(text("ALTER TABLE air_quality_readings ADD COLUMN IF NOT EXISTS time VARCHAR(50);"))
+        db.commit()
+        db.close()
+    except Exception as e:
+        print("Migration check note:", e)
 
-        required_columns = {
-            "aqi": "INTEGER",
-            "aqi_level": "VARCHAR(50)",
-            "date": "VARCHAR(20)",
-            "time": "VARCHAR(20)",
-            "pressure": "FLOAT"
-        }
-
-        inspector = inspect(engine)
-
-        existing_columns = {
-            col["name"]
-            for col in inspector.get_columns(
-                "air_quality_readings"
-            )
-        }
-
-        with engine.begin() as conn:
-            for column, column_type in required_columns.items():
-                if column not in existing_columns:
-                    conn.execute(
-                        text(
-                            f"ALTER TABLE air_quality_readings "
-                            f"ADD COLUMN `{column}` {column_type}"
-                        )
-                    )
-                    print(f"Added column: {column}")
-
-        print("MySQL database migration completed")
-
-    except Exception:
-        logger.exception("Database migration failed")
-        raise
-
+def calculate_aqi_level(pm25: float):
+    if pm25 is None:
+        return 50, "Good"
+    if pm25 <= 12.0:
+        aqi = (50 / 12.0) * pm25
+        level = "Good"
+    elif pm25 <= 35.4:
+        aqi = 50 + ((100 - 50) / (35.4 - 12.1)) * (pm25 - 12.1)
+        level = "Fair"
+    elif pm25 <= 55.4:
+        aqi = 101 + ((150 - 101) / (55.4 - 35.5)) * (pm25 - 35.5)
+        level = "Poor"
+    elif pm25 <= 150.4:
+        aqi = 151 + ((200 - 151) / (150.4 - 55.5)) * (pm25 - 55.5)
+        level = "Very Poor"
+    else:
+        aqi = 300
+        level = "Hazardous"
+    return int(round(aqi)), level
 
 @app.post("/telemetry")
-def receive_telemetry(
-    payload: schemas.TelemetryCreate,
-    db: Session = Depends(get_db)
-):
+def receive_telemetry(data: schemas.AirQualityCreate, db: Session = Depends(get_db)):
+    """
+    Receive validated sensor telemetry from ESP32 or Swagger UI and store in MySQL.
+    """
     try:
-        calc_aqi, calc_level = calculate_aqi_level(
-            payload.pm25
-        )
-
-        now = datetime.now(WAT)
-
+        payload = data.model_dump()
+        
+        pm25_val = float(payload.get("pm25", 0.0) or 0.0)
+        calc_aqi, calc_level = calculate_aqi_level(pm25_val)
+        
         db_reading = models.AirQualityReading(
-            device_id=payload.device_id,
-            pm25=payload.pm25,
-            pm10=payload.pm10,
-            co=payload.co,
-            co2=payload.co2,
-            temperature=payload.temperature,
-            humidity=payload.humidity,
-            pressure=payload.pressure,
-            aqi=(
-                payload.aqi
-                if payload.aqi is not None
-                else calc_aqi
-            ),
-            aqi_level=payload.aqi_level or calc_level,
-            date=now.strftime("%Y-%m-%d"),
-            time=now.strftime("%H:%M:%S")
+            device_id=payload.get("device_id", "ESP32_SENSOR_01"),
+            pm25=payload.get("pm25"),
+            pm10=payload.get("pm10"),
+            co=payload.get("co"),
+            co2=payload.get("co2"),
+            temperature=payload.get("temperature"),
+            humidity=payload.get("humidity"),
+            pressure=payload.get("pressure"),
+            aqi=int(calc_aqi),
+            aqi_level=calc_level,
+            date=datetime.now(WAT).strftime("%Y-%m-%d"),
+            time=datetime.now(WAT).strftime("%H:%M:%S")
         )
-
         db.add(db_reading)
         db.commit()
         db.refresh(db_reading)
-
+        
         return {
             "status": "success",
             "message": "Telemetry saved successfully",
-            "id": db_reading.id
+            "id": db_reading.id,
+            "calculated_aqi": calc_aqi,
+            "aqi_level": calc_level
         }
-
-    except Exception:
+    except Exception as e:
         db.rollback()
-        logger.exception("Telemetry save failed")
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to save telemetry"
-        )
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/telemetry")
 def get_telemetry(db: Session = Depends(get_db)):
