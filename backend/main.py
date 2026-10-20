@@ -102,31 +102,41 @@ def receive_telemetry(data: schemas.AirQualityCreate, db: Session = Depends(get_
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
-@app.get("/telemetry")
-def get_telemetry(db: Session = Depends(get_db)):
-    readings = db.query(models.AirQualityReading).order_by(models.AirQualityReading.id.asc()).all()
-    
-    result = []
-    for r in readings:
-        pm25_val = getattr(r, "pm25", 0.0) or 0.0
+@app.post("/telemetry")
+def receive_telemetry(data: schemas.AirQualityCreate, db: Session = Depends(get_db)):
+    """
+    Receive validated sensor telemetry from ESP32 or Swagger UI and store in MySQL.
+    """
+    try:
+        # Convert Pydantic model to dictionary
+        payload = data.dict()
+        
+        pm25_val = float(payload.get("pm25", 0.0) or 0.0)
         calc_aqi, calc_level = calculate_aqi_level(pm25_val)
         
-        # Safely check for columns to prevent server errors if columns don't exist yet
-        r_aqi = getattr(r, "aqi", None)
-        r_aqi_level = getattr(r, "aqi_level", None)
+        db_reading = models.AirQualityReading(
+            device_id=payload.get("device_id", "ESP32_SENSOR_01"),
+            pm25=payload.get("pm25"),
+            pm10=payload.get("pm10"),
+            co=payload.get("co"),
+            co2=payload.get("co2"),
+            temperature=payload.get("temperature"),
+            humidity=payload.get("humidity"),
+            pressure=payload.get("pressure"),
+            aqi=int(calc_aqi),
+            aqi_level=calc_level
+        )
+        db.add(db_reading)
+        db.commit()
+        db.refresh(db_reading)
         
-        result.append({
-            "id": getattr(r, "id", None),
-            "device_id": getattr(r, "device_id", "ESP32_SENSOR_01"),
-            "pm25": getattr(r, "pm25", None),
-            "pm10": getattr(r, "pm10", None),
-            "co": getattr(r, "co", None),
-            "co2": getattr(r, "co2", None),
-            "temperature": getattr(r, "temperature", None),
-            "humidity": getattr(r, "humidity", None),
-            "pressure": getattr(r, "pressure", None),
-            "aqi": r_aqi if r_aqi is not None else int(calc_aqi),
-            "aqi_level": r_aqi_level if r_aqi_level else calc_level,
-            "created_at": r.created_at.isoformat() if getattr(r, "created_at", None) else None
-        })
-    return result
+        return {
+            "status": "success",
+            "message": "Telemetry saved successfully",
+            "id": db_reading.id,
+            "calculated_aqi": calc_aqi,
+            "aqi_level": calc_level
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
