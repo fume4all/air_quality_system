@@ -71,46 +71,56 @@ def calculate_aqi_level(pm25: float):
         level = "Hazardous"
     return int(round(aqi)), level
 
+
 @app.post("/telemetry")
-def receive_telemetry(data: schemas.AirQualityCreate, db: Session = Depends(get_db)):
-    """
-    Receive validated sensor telemetry from ESP32 or Swagger UI and store in MySQL.
-    """
+def receive_telemetry(
+    payload: schemas.TelemetryCreate,
+    db: Session = Depends(get_db)
+):
     try:
-        # Use model_dump() for Pydantic v2 compatibility
-        payload = data.model_dump()
-        
-        pm25_val = float(payload.get("pm25", 0.0) or 0.0)
-        calc_aqi, calc_level = calculate_aqi_level(pm25_val)
-        
-        db_reading = models.AirQualityReading(
-            device_id=payload.get("device_id", "ESP32_SENSOR_01"),
-            pm25=payload.get("pm25"),
-            pm10=payload.get("pm10"),
-            co=payload.get("co"),
-            co2=payload.get("co2"),
-            temperature=payload.get("temperature"),
-            humidity=payload.get("humidity"),
-            pressure=payload.get("pressure"),
-            aqi=int(calc_aqi),
-            aqi_level=calc_level,
-            date=datetime.now(WAT).strftime("%Y-%m-%d"),
-            time=datetime.now(WAT).strftime("%H:%M:%S")
+        calc_aqi, calc_level = calculate_aqi_level(
+            payload.pm25
         )
+
+        now = datetime.now(WAT)
+
+        db_reading = models.AirQualityReading(
+            device_id=payload.device_id,
+            pm25=payload.pm25,
+            pm10=payload.pm10,
+            co=payload.co,
+            co2=payload.co2,
+            temperature=payload.temperature,
+            humidity=payload.humidity,
+            pressure=payload.pressure,
+            aqi=(
+                payload.aqi
+                if payload.aqi is not None
+                else calc_aqi
+            ),
+            aqi_level=payload.aqi_level or calc_level,
+            date=now.strftime("%Y-%m-%d"),
+            time=now.strftime("%H:%M:%S")
+        )
+
         db.add(db_reading)
         db.commit()
         db.refresh(db_reading)
-        
+
         return {
             "status": "success",
             "message": "Telemetry saved successfully",
-            "id": db_reading.id,
-            "calculated_aqi": calc_aqi,
-            "aqi_level": calc_level
+            "id": db_reading.id
         }
-    except Exception as e:
+
+    except Exception:
         db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Telemetry save failed")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to save telemetry"
+        )
+
 
 @app.get("/telemetry")
 def get_telemetry(db: Session = Depends(get_db)):
