@@ -15,69 +15,30 @@ from schemas import AirQualityCreate
 # Automatically create database tables on startup if they don't exist
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="FUTA Air Quality Monitoring API", version="1.0.0")
+app = FastAPI(title="FUTA IoT-Based Air Quality Data Collection/Monitoring System and Analysis of Air Pollution")
 
-# Enable CORS for frontend and ESP32 hardware communication
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Mount static files (so index.html can load script.js and CSS)
-app.mount("/static", StaticFiles(directory="."), name="static")
-
-# Dependency to get database session
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+# Serve Frontend Static Files
+app.mount("/static", StaticFiles(directory="frontend"), name="static")
 
 @app.get("/")
-def read_index():
-    return FileResponse("index.html")
+def serve_dashboard():
+    return FileResponse("frontend/index.html")
 
-@app.post("/telemetry")
-def receive_telemetry(payload: AirQualityCreate, db: Session = Depends(get_db)):
-    try:
-        db_reading = AirQualityReadings(
-            device_id=payload.device_id,
-            pm25=payload.pm25,
-            pm10=payload.pm10,
-            co=payload.co,
-            co2=payload.co2,
-            temperature=payload.temperature,
-            humidity=payload.humidity,
-            pressure=payload.pressure,
-            timestamp=datetime.utcnow()
-        )
-        db.add(db_reading)
-        db.commit()
-        db.refresh(db_reading)
-        return {
-            "status": "success",
-            "message": "Telemetry stored successfully",
-            "data": db_reading
-        }
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
-
+# 1. Latest Telemetry Endpoint (For Dashboard Cards)
 @app.get("/telemetry")
 def get_latest_telemetry(db: Session = Depends(get_db)):
     latest = db.query(AirQualityReadings).order_by(AirQualityReadings.id.desc()).first()
     if not latest:
         return {"message": "No telemetry data found"}
     return latest
+
+# 2. Telemetry History Endpoint (For Chart.js Trends)
 @app.get("/telemetry/history")
 def get_telemetry_history(limit: int = 20, db: Session = Depends(get_db)):
     readings = db.query(AirQualityReadings).order_by(AirQualityReadings.id.desc()).limit(limit).all()
-    # Reverse so chronological order is oldest to newest for charts
     return list(reversed(readings))
+
+# 3. CSV Export Endpoint (Matches Reference Excel Structure & Enforces ESP32_SENSOR_01)
 @app.get("/telemetry/export")
 @app.get("/export-csv")
 def export_csv(db: Session = Depends(get_db)):
@@ -87,6 +48,26 @@ def export_csv(db: Session = Depends(get_db)):
     
     data = []
     for r in readings:
+        ts = getattr(r, 'timestamp', None)
+        date_str = ts.strftime('%d-%m-%y') if ts else ""
+        time_str = ts.strftime('%H:%M:%S') if ts else ""
+        
+        pm25 = getattr(r, 'pm25', 0) or 0
+        aqi = int(pm25 * 1.2) if pm25 else 50
+        
+        if aqi <= 50:
+            aqi_level = "Very Good"
+        elif aqi <= 100:
+            aqi_level = "Good"
+        elif aqi <= 150:
+            aqi_level = "Fair"
+        elif aqi <= 200:
+            aqi_level = "Poor"
+        elif aqi <= 300:
+            aqi_level = "Very Poor"
+        else:
+            aqi_level = "Hazardous"
+
         data.append({
             "id": r.id,
             "device_id": "ESP32_SENSOR_01",
@@ -97,33 +78,21 @@ def export_csv(db: Session = Depends(get_db)):
             "temperature": r.temperature,
             "humidity": r.humidity,
             "pressure": r.pressure,
-            "timestamp": r.timestamp
+            "aqi": aqi,
+            "aqi_level": aqi_level,
+            "date": date_str,
+            "time": time_str
         })
         
     df = pd.DataFrame(data)
     
-    # Enforce exact clean column sequence
-    column_order = ["id", "device_id", "pm25", "pm10", "co", "co2", "temperature", "humidity", "pressure", "timestamp"]
+    # Strict column order matching your reference spreadsheet
+    column_order = [
+        "id", "device_id", "pm25", "pm10", "co", "co2", 
+        "temperature", "humidity", "pressure", "aqi", "aqi_level", "date", "time"
+    ]
     df = df[[col for col in column_order if col in df.columns]]
     
-    csv_data = df.to_csv(index=False)
-    
-    return Response(
-        content=csv_data,
-        media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=futa_air_quality_dataset.csv"}
-    )
-@app.get("/telemetry/export")
-def export_csv(db: Session = Depends(get_db)):
-    readings = db.query(AirQualityReadings).all()
-    if not readings:
-        raise HTTPException(status_code=404, detail="No data available for export")
-    
-    data = [r.__dict__ for r in readings]
-    for d in data:
-        d.pop('_sa_instance_state', None)
-        
-    df = pd.DataFrame(data)
     csv_data = df.to_csv(index=False)
     
     return Response(
