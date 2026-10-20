@@ -1,4 +1,4 @@
-const API_URL = "https://air-quality-system-r8np.onrender.com/telemetry";
+const API_BASE_URL = "https://airqualitysystem-production.up.railway.app";
 
 let pollutantChart, trendChart;
 
@@ -234,7 +234,6 @@ function downloadCSV(event) {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 }
-    
 
 // Automatically attach this function to your "Download Dataset (CSV)" button/link
 document.addEventListener("click", function(e) {
