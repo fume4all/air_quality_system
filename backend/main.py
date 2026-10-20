@@ -121,7 +121,6 @@ def receive_telemetry(
             detail="Failed to save telemetry"
         )
 
-
 @app.get("/telemetry")
 def get_telemetry(db: Session = Depends(get_db)):
     """
