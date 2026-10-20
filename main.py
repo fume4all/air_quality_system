@@ -9,7 +9,6 @@ from models import AirQualityReadings
 from schemas import AirQualityCreate
 
 # Automatically create database tables on startup if they don't exist
-Base.metadata.drop_all(bind=engine)
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="FUTA Air Quality Monitoring API", version="1.0.0")
