@@ -79,6 +79,41 @@ def get_telemetry_history(limit: int = 20, db: Session = Depends(get_db)):
     # Reverse so chronological order is oldest to newest for charts
     return list(reversed(readings))
 @app.get("/telemetry/export")
+@app.get("/export-csv")
+def export_csv(db: Session = Depends(get_db)):
+    readings = db.query(AirQualityReadings).all()
+    if not readings:
+        raise HTTPException(status_code=404, detail="No data available for export")
+    
+    data = []
+    for r in readings:
+        data.append({
+            "id": r.id,
+            "device_id": "ESP32_SENSOR_01",
+            "pm25": r.pm25,
+            "pm10": r.pm10,
+            "co": r.co,
+            "co2": r.co2,
+            "temperature": r.temperature,
+            "humidity": r.humidity,
+            "pressure": r.pressure,
+            "timestamp": r.timestamp
+        })
+        
+    df = pd.DataFrame(data)
+    
+    # Enforce exact clean column sequence
+    column_order = ["id", "device_id", "pm25", "pm10", "co", "co2", "temperature", "humidity", "pressure", "timestamp"]
+    df = df[[col for col in column_order if col in df.columns]]
+    
+    csv_data = df.to_csv(index=False)
+    
+    return Response(
+        content=csv_data,
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=futa_air_quality_dataset.csv"}
+    )
+@app.get("/telemetry/export")
 def export_csv(db: Session = Depends(get_db)):
     readings = db.query(AirQualityReadings).all()
     if not readings:
