@@ -38,38 +38,49 @@ if os.path.exists("frontend"):
     def serve_dashboard():
         return FileResponse(os.path.join("frontend", "index.html"))
 
+
+from sqlalchemy import inspect, text
+from .database import engine
+from . import models
+
 @app.on_event("startup")
 def run_migrations():
     try:
-        db = SessionLocal()
-        db.execute(text("ALTER TABLE air_quality_readings ADD COLUMN IF NOT EXISTS aqi INTEGER;"))
-        db.execute(text("ALTER TABLE air_quality_readings ADD COLUMN IF NOT EXISTS aqi_level VARCHAR(50);"))
-        db.execute(text("ALTER TABLE air_quality_readings ADD COLUMN IF NOT EXISTS date VARCHAR(50);"))
-        db.execute(text("ALTER TABLE air_quality_readings ADD COLUMN IF NOT EXISTS time VARCHAR(50);"))
-        db.commit()
-        db.close()
-    except Exception as e:
-        print("Migration check note:", e)
+        models.Base.metadata.create_all(bind=engine)
 
-def calculate_aqi_level(pm25: float):
-    if pm25 is None:
-        return 50, "Good"
-    if pm25 <= 12.0:
-        aqi = (50 / 12.0) * pm25
-        level = "Good"
-    elif pm25 <= 35.4:
-        aqi = 50 + ((100 - 50) / (35.4 - 12.1)) * (pm25 - 12.1)
-        level = "Fair"
-    elif pm25 <= 55.4:
-        aqi = 101 + ((150 - 101) / (55.4 - 35.5)) * (pm25 - 35.5)
-        level = "Poor"
-    elif pm25 <= 150.4:
-        aqi = 151 + ((200 - 151) / (150.4 - 55.5)) * (pm25 - 55.5)
-        level = "Very Poor"
-    else:
-        aqi = 300
-        level = "Hazardous"
-    return int(round(aqi)), level
+        required_columns = {
+            "aqi": "INTEGER",
+            "aqi_level": "VARCHAR(50)",
+            "date": "VARCHAR(20)",
+            "time": "VARCHAR(20)",
+            "pressure": "FLOAT"
+        }
+
+        inspector = inspect(engine)
+
+        existing_columns = {
+            col["name"]
+            for col in inspector.get_columns(
+                "air_quality_readings"
+            )
+        }
+
+        with engine.begin() as conn:
+            for column, column_type in required_columns.items():
+                if column not in existing_columns:
+                    conn.execute(
+                        text(
+                            f"ALTER TABLE air_quality_readings "
+                            f"ADD COLUMN `{column}` {column_type}"
+                        )
+                    )
+                    print(f"Added column: {column}")
+
+        print("MySQL database migration completed")
+
+    except Exception:
+        logger.exception("Database migration failed")
+        raise
 
 
 @app.post("/telemetry")
