@@ -3,8 +3,8 @@ import pytz
 from sqlalchemy.orm import Session
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from .database import engine, Base, get_db
-from . import models, schemas
+from backend.database import engine, Base, get_db
+from backend import models, schemas
 import os
 
 app = FastAPI()

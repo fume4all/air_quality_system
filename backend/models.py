@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, Float, String, DateTime
 from datetime import datetime
 import pytz
-from .database import Base
+from .database import Base  # or from backend.database import Base
 
 WAT = pytz.timezone("Africa/Lagos")
 
