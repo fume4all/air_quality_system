@@ -1,5 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from datetime import datetime
 
@@ -22,6 +24,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Mount static files (so index.html can load script.js and CSS)
+app.mount("/static", StaticFiles(directory="."), name="static")
+
 # Dependency to get database session
 def get_db():
     db = SessionLocal()
@@ -31,8 +36,8 @@ def get_db():
         db.close()
 
 @app.get("/")
-def serve_dashboard():
-    return {"message": "FUTA IoT Air Quality Monitoring Backend is Live!"}
+def read_index():
+    return FileResponse("index.html")
 
 @app.post("/telemetry")
 def receive_telemetry(payload: AirQualityCreate, db: Session = Depends(get_db)):
