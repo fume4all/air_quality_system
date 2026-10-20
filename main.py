@@ -1,7 +1,9 @@
+import pandas as pd
+from fastapi.responses import Response, FileResponse
+from fastapi.staticfiles import StaticFiles
+# ... your other existing imports ...
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from datetime import datetime
 
@@ -71,3 +73,26 @@ def get_latest_telemetry(db: Session = Depends(get_db)):
     if not latest:
         return {"message": "No telemetry data found"}
     return latest
+@app.get("/telemetry/history")
+def get_telemetry_history(limit: int = 20, db: Session = Depends(get_db)):
+    readings = db.query(AirQualityReadings).order_by(AirQualityReadings.id.desc()).limit(limit).all()
+    # Reverse so chronological order is oldest to newest for charts
+    return list(reversed(readings))
+@app.get("/telemetry/export")
+def export_csv(db: Session = Depends(get_db)):
+    readings = db.query(AirQualityReadings).all()
+    if not readings:
+        raise HTTPException(status_code=404, detail="No data available for export")
+    
+    data = [r.__dict__ for r in readings]
+    for d in data:
+        d.pop('_sa_instance_state', None)
+        
+    df = pd.DataFrame(data)
+    csv_data = df.to_csv(index=False)
+    
+    return Response(
+        content=csv_data,
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=futa_air_quality_dataset.csv"}
+    )
