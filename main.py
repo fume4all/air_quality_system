@@ -18,11 +18,11 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(title="FUTA IoT-Based Air Quality Data Collection/Monitoring System and Analysis of Air Pollution")
 
 # Serve Frontend Static Files
-app.mount("/static", StaticFiles(directory="frontend"), name="static")
+app.mount("/static", StaticFiles(directory="."), name="static")
 
 @app.get("/")
 def serve_dashboard():
-    return FileResponse("frontend/index.html")
+    return FileResponse("index.html")
 
 # 1. Latest Telemetry Endpoint (For Dashboard Cards)
 @app.get("/telemetry")
