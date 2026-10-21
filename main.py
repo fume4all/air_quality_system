@@ -14,7 +14,7 @@ from schemas import AirQualityCreate
 from database import get_db
 # Automatically create database tables on startup if they don't exist
 Base.metadata.create_all(bind=engine)
-
+# Force deployment refresh
 app = FastAPI(title="FUTA IoT-Based Air Quality Data Collection/Monitoring System and Analysis of Air Pollution")
 
 # Serve Frontend Static Files
