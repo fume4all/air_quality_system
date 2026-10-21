@@ -12,17 +12,17 @@ async function fetchLatestData() {
             if (data && data.device_id) {
                 document.getElementById("device-id-display").innerText = data.device_id;
                 
-                if (data.timestamp) {
-                    document.getElementById("timestamp-display").innerText = new Date(data.timestamp).toLocaleString();
-                }
+               if (data.timestamp) {
+    document.getElementById("timestamp-display")?.setAttribute("innerText", new Date(data.timestamp).toLocaleTimeString());
+}
 
-                document.getElementById("pm25-val").innerText = data.pm25 ?? "--";
-                document.getElementById("pm10-val").innerText = data.pm10 ?? "--";
-                document.getElementById("co-val").innerText = data.co ?? "--";
-                document.getElementById("co2-val").innerText = data.co2 ?? "--";
-                document.getElementById("temp-val").innerText = (data.temperature !== undefined ? data.temperature + " °C" : "--");
-                document.getElementById("humidity-val").innerText = (data.humidity !== undefined ? data.humidity + " %" : "--");
-                document.getElementById("pressure-val").innerText = (data.pressure !== undefined ? data.pressure + " hPa" : "--");
+document.getElementById("pm25-val")?.setAttribute("innerText", data.pm25 ?? "--");
+document.getElementById("pm10-val")?.setAttribute("innerText", data.pm10 ?? "--");
+document.getElementById("co-val")?.setAttribute("innerText", data.co ?? "--");
+document.getElementById("co2-val")?.setAttribute("innerText", data.co2 ?? "--");
+document.getElementById("temp-val")?.setAttribute("innerText", data.temperature ?? "--");
+document.getElementById("humidity-val")?.setAttribute("innerText", data.humidity ?? "--");
+document.getElementById("pressure-val")?.setAttribute("innerText", data.pressure ?? "--");
             }
         }
 
