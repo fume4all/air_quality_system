@@ -11,7 +11,7 @@ from datetime import datetime
 from database import SessionLocal, engine, Base
 from models import AirQualityReadings
 from schemas import AirQualityCreate
-
+from database import get_db
 # Automatically create database tables on startup if they don't exist
 Base.metadata.create_all(bind=engine)
 
