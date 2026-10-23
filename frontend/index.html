@@ -371,14 +371,17 @@
     <span>Device ID: <strong id="device_id">Connecting...</strong></span> | 
     <span>Updated: <strong id="timestamp">--</strong> (WAT)</span>
 </div>
-            <div class="actions">
-                <a href="https://airqualitysystem-production.up.railway.app/export-csv" class="btn btn-primary"><i class="fas fa-file-download"></i> Download Dataset (CSV)</a>
-    <i class="fas fa-file-download"></i> Download Dataset (CSV)
-</a>
-                <button id="refreshBtn" onclick="fetchTelemetryData()" class="btn btn-primary">
-                    <i id="refreshIcon" class="fas fa-sync-alt"></i> Refresh Now
-                </button>
-            </div>
+           <div class="actions">
+    <a href="/export-csv" class="btn btn-primary">
+        <i class="fas fa-file-download"></i>Download Dataset (CSV)
+    </a>
+
+    <button id="refreshBtn" type="button" class="btn btn-primary">
+        <i id="refreshIcon" class="fas fa-sync-alt"></i>
+        Refresh Now
+    </button>
+</div>
+
         </header>
 
         <!-- Location Header -->
@@ -516,7 +519,10 @@
                 <span class="param-unit">hPa</span>
             </div>
             <div class="param-card" style="border: 1px solid #38bdf8;">
-                <div class="param-header"><span class="param-title" style="color:#38bdf8;">AI Classification</span> <i class="fas fa-brain icon"></i></div>
+                <div class="param-header"><span class="param-title" style="color:#38bdf8;">
+    Live Air Quality Analysis
+</span>
+ <i class="fas fa-brain icon"></i></div>
                 <p class="param-value" id="ai_prediction" style="font-size: 1.15rem; color: #4ade80;">Analyzing...</p>
                 <span class="param-unit" id="ai_aqi_index">AQI Evaluation</span>
             </div>
@@ -584,6 +590,17 @@
             </div>
         </div>
     </div>
-<script src="/static/script.js"></script>
+<!-- Your existing dashboard HTML content (cards, tables, etc.) -->
+
+    <!-- 1. Include Chart.js first so it's available -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- 2. Include your custom dashboard script -->
+    <script src="/static/script.js"></script>
+    <!-- 1. Include Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- 2. Include custom dashboard script -->
+    <script src="/static/script.js"></script>
 </body>
 </html>

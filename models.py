@@ -14,4 +14,4 @@ class AirQualityReadings(Base):
     temperature = Column(Float, nullable=False)
     humidity = Column(Float, nullable=False)
     pressure = Column(Float, nullable=False)
-    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

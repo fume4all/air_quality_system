@@ -156,6 +156,16 @@ header h1 {
     width: 100%;
 }
 
+/* Added explicit chart container safety rules to prevent height collapse */
+.chart-container, 
+canvas#pollutantChart, 
+canvas#historicalChart {
+    position: relative;
+    width: 100% !important;
+    height: 280px !important;
+    max-height: 280px !important;
+}
+
 .metrics-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));

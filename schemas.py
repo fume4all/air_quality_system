@@ -1,9 +1,11 @@
-from pydantic import BaseModel
-from datetime import datetime
-from typing import Optional
+from pydantic import BaseModel, Field
+from typing import Literal
 
 class AirQualityCreate(BaseModel):
-    device_id: str
+    device_id: Literal["ESP32_SENSOR_01"] = Field(
+        description="Authorized ESP32 device ID"
+    )
+
     pm25: float
     pm10: float
     co: float
