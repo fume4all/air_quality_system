@@ -1,13 +1,15 @@
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-# Local MySQL Database Connection URL
-SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:Family4all%40za@localhost:3306/air_quality_db"
-
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL
+# Uses Render's cloud DATABASE_URL if available, otherwise falls back to your local MySQL
+SQLALCHEMY_DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "mysql+pymysql://root:Family4all%40za@localhost:3306/air_quality_db",
 )
+
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
