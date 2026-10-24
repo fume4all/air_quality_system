@@ -44,20 +44,20 @@ const pollutantChart = new Chart(pollutantCtx, {
     }
 });
 
-// 2. Initialize Historical Trends Line Chart (Dual-Axis: Left 0-450 with 50 steps for pollutants/temp/humidity, Right for Pressure)
+// 2. Initialize Historical Trends Line Chart (Strictly 0 to 650 with 50 step size for clear pattern visibility)
 const trendCtx = document.getElementById('trendChart').getContext('2d');
 const trendChart = new Chart(trendCtx, {
     type: 'line',
     data: {
         labels: [],
         datasets: [
-            { label: 'PM2.5', data: [], borderColor: '#38bdf8', tension: 0.3, fill: false, yAxisID: 'y' },
-            { label: 'PM10', data: [], borderColor: '#3b82f6', tension: 0.3, fill: false, yAxisID: 'y' },
-            { label: 'CO', data: [], borderColor: '#f59e0b', tension: 0.3, fill: false, yAxisID: 'y' },
-            { label: 'CO₂', data: [], borderColor: '#10b981', tension: 0.3, fill: false, yAxisID: 'y' },
-            { label: 'Temp (°C)', data: [], borderColor: '#ef4444', tension: 0.3, fill: false, yAxisID: 'y' },
-            { label: 'Humidity (%)', data: [], borderColor: '#06b6d4', tension: 0.3, fill: false, yAxisID: 'y' },
-            { label: 'Pressure', data: [], borderColor: '#a855f7', tension: 0.3, fill: false, yAxisID: 'y1' }
+            { label: 'PM2.5', data: [], borderColor: '#38bdf8', tension: 0.3, fill: false },
+            { label: 'PM10', data: [], borderColor: '#3b82f6', tension: 0.3, fill: false },
+            { label: 'CO', data: [], borderColor: '#f59e0b', tension: 0.3, fill: false },
+            { label: 'CO₂', data: [], borderColor: '#10b981', tension: 0.3, fill: false },
+            { label: 'Temp (°C)', data: [], borderColor: '#ef4444', tension: 0.3, fill: false },
+            { label: 'Humidity (%)', data: [], borderColor: '#06b6d4', tension: 0.3, fill: false },
+            { label: 'Pressure', data: [], borderColor: '#a855f7', tension: 0.3, fill: false }
         ]
     },
     options: {
@@ -68,21 +68,13 @@ const trendChart = new Chart(trendCtx, {
         },
         scales: {
             y: { 
-                type: 'linear',
-                position: 'left',
                 beginAtZero: true,
-                max: 450, // Strict 0 to 450 range
+                max: 650, // Ends cleanly at 650 to display trends clearly
                 ticks: { 
-                    stepSize: 50, // Clean 50-unit intervals (0, 50, 100... 450)
+                    stepSize: 50, // Clean 50-unit intervals (0 to 650)
                     color: '#cbd5e1' 
                 },
                 grid: { color: 'rgba(255, 255, 255, 0.1)' } 
-            },
-            y1: {
-                type: 'linear',
-                position: 'right',
-                grid: { drawOnChartArea: false }, // Prevent overlapping grid lines
-                ticks: { color: '#a855f7' }
             },
             x: { grid: { display: false }, ticks: { color: '#cbd5e1' } }
         }
