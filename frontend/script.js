@@ -1,4 +1,4 @@
-// 1. Initialize Chart.js for the 7-Parameter Pollutant Bar Chart (0 to 450 with 50-unit steps)
+// 1. Initialize Chart.js for the 7-Parameter Pollutant Bar Chart
 const pollutantCtx = document.getElementById('pollutantChart').getContext('2d');
 const pollutantChart = new Chart(pollutantCtx, {
     type: 'bar',
@@ -29,9 +29,9 @@ const pollutantChart = new Chart(pollutantCtx, {
         scales: { 
             y: { 
                 beginAtZero: true,
-                max: 450, // Strict max matching 450
+                max: 450,
                 ticks: { 
-                    stepSize: 50, // Clean 50-unit intervals (0, 50, 100... 450)
+                    stepSize: 50, 
                     color: '#cbd5e1' 
                 },
                 grid: { color: 'rgba(255, 255, 255, 0.1)' }
@@ -44,20 +44,20 @@ const pollutantChart = new Chart(pollutantCtx, {
     }
 });
 
-// 2. Initialize Historical Trends Line Chart (All 7 parameters as a clean line graph with 0-450 scale)
+// 2. Initialize Historical Trends Line Chart (Area fill style with 0-650 scale and 50-unit steps)
 const trendCtx = document.getElementById('trendChart').getContext('2d');
 const trendChart = new Chart(trendCtx, {
     type: 'line',
     data: {
         labels: [],
         datasets: [
-            { label: 'PM2.5', data: [], borderColor: '#38bdf8', tension: 0.3, fill: false, yAxisID: 'y' },
-            { label: 'PM10', data: [], borderColor: '#3b82f6', tension: 0.3, fill: false, yAxisID: 'y' },
-            { label: 'CO', data: [], borderColor: '#f59e0b', tension: 0.3, fill: false, yAxisID: 'y' },
-            { label: 'CO₂', data: [], borderColor: '#10b981', tension: 0.3, fill: false, yAxisID: 'y' },
+            { label: 'PM2.5', data: [], borderColor: '#38bdf8', backgroundColor: 'rgba(56, 189, 248, 0.15)', tension: 0.3, fill: true, yAxisID: 'y' },
+            { label: 'PM10', data: [], borderColor: '#a855f7', backgroundColor: 'rgba(168, 85, 247, 0.15)', tension: 0.3, fill: true, yAxisID: 'y' },
+            { label: 'CO', data: [], borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.15)', tension: 0.3, fill: true, yAxisID: 'y' },
+            { label: 'CO₂', data: [], borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.15)', tension: 0.3, fill: true, yAxisID: 'y' },
             { label: 'Temp (°C)', data: [], borderColor: '#ef4444', tension: 0.3, fill: false, yAxisID: 'y' },
             { label: 'Humidity (%)', data: [], borderColor: '#06b6d4', tension: 0.3, fill: false, yAxisID: 'y' },
-            { label: 'Pressure', data: [], borderColor: '#a855f7', tension: 0.3, fill: false, yAxisID: 'y1' }
+            { label: 'Pressure', data: [], borderColor: '#8b5cf6', tension: 0.3, fill: false, yAxisID: 'y1' }
         ]
     },
     options: {
@@ -71,9 +71,10 @@ const trendChart = new Chart(trendCtx, {
                 type: 'linear',
                 position: 'left',
                 beginAtZero: true,
-                max: 450, // Strict 0 to 450 range with 50-unit steps
+                min: 0,
+                max: 650, // Calibrated strictly from 0 to 650
                 ticks: { 
-                    stepSize: 50, 
+                    stepSize: 50, // Clean 50-unit intervals (0, 50, 100... 650)
                     color: '#cbd5e1' 
                 },
                 grid: { color: 'rgba(255, 255, 255, 0.1)' } 
