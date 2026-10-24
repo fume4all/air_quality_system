@@ -97,6 +97,7 @@
             gap: 0.5rem;
             transition: all 0.2s ease-in-out;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            text-decoration: none;
         }
 
         .btn:active {
@@ -144,8 +145,9 @@
 
         .pollutant-chart-box {
             position: relative;
-            height: 250px;
+            height: 220px;
             width: 100%;
+            max-width: 100%;
         }
 
         /* AQI Index Standard Grid Card */
@@ -321,8 +323,9 @@
 
         .chart-box {
             position: relative;
-            height: 230px;
+            height: 220px;
             width: 100%;
+            max-width: 100%;
         }
 
         .metrics-table {
@@ -364,24 +367,21 @@
             <div class="institution-title">Federal University of Technology, Akure</div>
             <h1>Development of an IoT-based Air Quality Data Collection Device and Analysis of Air Pollution</h1>
             <div class="meta-info">
-    <span>Dept: <strong>COMPUTER ENGINEERING</strong></span> | 
-    <span>School: <strong>School of Engineering and Electrical Systems</strong></span> | 
-    <span>Student: <strong>OKPAKO Ejomafuvwe</strong></span> | 
-    <span>Matric No: <strong>CPE/24/3741</strong></span> | 
-    <span>Device ID: <strong id="device_id">Connecting...</strong></span> | 
-    <span>Updated: <strong id="timestamp">--</strong> (WAT)</span>
-</div>
-           <div class="actions">
-    <a href="/export-csv" class="btn btn-primary">
-        <i class="fas fa-file-download"></i>Download Dataset (CSV)
-    </a>
-
-    <button id="refreshBtn" type="button" class="btn btn-primary">
-        <i id="refreshIcon" class="fas fa-sync-alt"></i>
-        Refresh Now
-    </button>
-</div>
-
+                <span>Dept: <strong>COMPUTER ENGINEERING</strong></span> | 
+                <span>School: <strong>School of Engineering and Electrical Systems</strong></span> | 
+                <span>Student: <strong>OKPAKO Ejomafuvwe</strong></span> | 
+                <span>Matric No: <strong>CPE/24/3741</strong></span> | 
+                <span>Device ID: <strong id="device_id">Connecting...</strong></span> | 
+                <span>Updated: <strong id="timestamp">--</strong> (WAT)</span>
+            </div>
+            <div class="actions">
+                <a href="/export-csv" class="btn btn-primary">
+                    <i class="fas fa-file-download"></i>Download Dataset (CSV)
+                </a>
+                <button id="refreshBtn" type="button" class="btn btn-primary">
+                    <i id="refreshIcon" class="fas fa-sync-alt"></i> Refresh Now
+                </button>
+            </div>
         </header>
 
         <!-- Location Header -->
@@ -519,10 +519,7 @@
                 <span class="param-unit">hPa</span>
             </div>
             <div class="param-card" style="border: 1px solid #38bdf8;">
-                <div class="param-header"><span class="param-title" style="color:#38bdf8;">
-    Live Air Quality Analysis
-</span>
- <i class="fas fa-brain icon"></i></div>
+                <div class="param-header"><span class="param-title" style="color:#38bdf8;">Live Air Quality Analysis</span> <i class="fas fa-brain icon"></i></div>
                 <p class="param-value" id="ai_prediction" style="font-size: 1.15rem; color: #4ade80;">Analyzing...</p>
                 <span class="param-unit" id="ai_aqi_index">AQI Evaluation</span>
             </div>
@@ -553,54 +550,45 @@
                             </tr>
                         </thead>
                         <tbody>
-    <tr>
-        <td><strong>Accuracy</strong></td>
-        <td class="val-rf">96.8%</td>
-        <td class="val-dt">92.4%</td>
-    </tr>
-    <tr>
-        <td><strong>Precision</strong></td>
-        <td class="val-rf">95.9%</td>
-        <td class="val-dt">91.5%</td>
-    </tr>
-    <tr>
-        <td><strong>Recall</strong></td>
-        <td class="val-rf">96.2%</td>
-        <td class="val-dt">92.0%</td>
-    </tr>
-    <tr>
-        <td><strong>F1-Score</strong></td>
-        <td class="val-rf">96.0%</td>
-        <td class="val-dt">91.7%</td>
-    </tr>
-    <!-- INSERT MAE & RMSE HERE -->
-    <tr>
-        <td><strong>MAE</strong></td>
-        <td class="val-rf">2.14</td>
-        <td class="val-dt">3.85</td>
-    </tr>
-    <tr>
-        <td><strong>RMSE</strong></td>
-        <td class="val-rf">3.02</td>
-        <td class="val-dt">4.72</td>
-    </tr>
-</tbody>
+                            <tr>
+                                <td><strong>Accuracy</strong></td>
+                                <td class="val-rf">96.8%</td>
+                                <td class="val-dt">92.4%</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Precision</strong></td>
+                                <td class="val-rf">95.9%</td>
+                                <td class="val-dt">91.5%</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Recall</strong></td>
+                                <td class="val-rf">96.2%</td>
+                                <td class="val-dt">92.0%</td>
+                            </tr>
+                            <tr>
+                                <td><strong>F1-Score</strong></td>
+                                <td class="val-rf">96.0%</td>
+                                <td class="val-dt">91.7%</td>
+                            </tr>
+                            <tr>
+                                <td><strong>MAE</strong></td>
+                                <td class="val-rf">2.14</td>
+                                <td class="val-dt">3.85</td>
+                            </tr>
+                            <tr>
+                                <td><strong>RMSE</strong></td>
+                                <td class="val-rf">3.02</td>
+                                <td class="val-dt">4.72</td>
+                            </tr>
+                        </tbody>
                     </table>
                 </div>
             </div>
         </div>
     </div>
-<!-- Your existing dashboard HTML content (cards, tables, etc.) -->
 
-    <!-- 1. Include Chart.js first so it's available -->
+    <!-- Single set of script imports -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <!-- 2. Include your custom dashboard script -->
-    <script src="/static/script.js"></script>
-    <!-- 1. Include Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <!-- 2. Include custom dashboard script -->
     <script src="/static/script.js"></script>
 </body>
 </html>
