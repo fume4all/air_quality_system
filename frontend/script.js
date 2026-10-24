@@ -1,7 +1,3 @@
-// Define your API base URL
-// Automatically targets local server or live Render URL depending on where it's opened
-const API_BASE_URL = window.location.origin;
-
 // 1. Initialize Chart.js for the 7-Parameter Pollutant Bar Chart
 const pollutantCtx = document.getElementById('pollutantChart').getContext('2d');
 const pollutantChart = new Chart(pollutantCtx, {
@@ -98,7 +94,7 @@ function animateValue(id, start, end, duration) {
 // 3. Main Data Fetching and UI Update Function
 async function fetchAllData() {
     try {
-        const response = await fetch(`${API_BASE_URL}/api/latest-sensor-data`);
+        const response = await fetch('/api/latest-sensor-data');
         if (!response.ok) throw new Error("Network response was not ok");
         
         const data = await response.json();
@@ -159,7 +155,7 @@ async function fetchAllData() {
 
     // Fetch and Populate Hourly Forecast
     try {
-        const forecastRes = await fetch(`${API_BASE_URL}/api/hourly-forecast`);
+        const forecastRes = await fetch('/api/hourly-forecast');
         if (forecastRes.ok) {
             const forecast = await forecastRes.json();
             forecast.forEach((item, index) => {
@@ -178,7 +174,7 @@ async function fetchAllData() {
 
     // Fetch Historical Trends for all 7 parameters
     try {
-        const historyRes = await fetch(`${API_BASE_URL}/api/historical-trends`);
+        const historyRes = await fetch('/api/historical-trends');
         if (historyRes.ok) {
             const history = await historyRes.json();
             trendChart.data.labels = history.map(item => item.timestamp);
