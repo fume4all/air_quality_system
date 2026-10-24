@@ -1,5 +1,6 @@
 // Define your API base URL
-const API_BASE_URL = "http://127.0.0.1:8000"; // Or your Render URL when deployed
+// Automatically targets local server or live Render URL depending on where it's opened
+const API_BASE_URL = window.location.origin;
 
 // 1. Initialize Chart.js for the 7-Parameter Pollutant Bar Chart
 const pollutantCtx = document.getElementById('pollutantChart').getContext('2d');
