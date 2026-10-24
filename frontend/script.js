@@ -1,4 +1,4 @@
-// 1. Initialize Chart.js for the 7-Parameter Pollutant Bar Chart (Calibrated to 50 step size from 0)
+// 1. Initialize Chart.js for the 7-Parameter Pollutant Bar Chart
 const pollutantCtx = document.getElementById('pollutantChart').getContext('2d');
 const pollutantChart = new Chart(pollutantCtx, {
     type: 'bar',
@@ -31,7 +31,7 @@ const pollutantChart = new Chart(pollutantCtx, {
                 beginAtZero: true,
                 suggestedMax: 200,
                 ticks: { 
-                    stepSize: 50, // Clean 50-unit intervals (0, 50, 100, 150, 200)
+                    stepSize: 50, 
                     color: '#cbd5e1' 
                 },
                 grid: { color: 'rgba(255, 255, 255, 0.1)' }
@@ -44,7 +44,7 @@ const pollutantChart = new Chart(pollutantCtx, {
     }
 });
 
-// 2. Initialize Historical Trends Line Chart (Calibrated with 50-unit steps from 0)
+// 2. Initialize Historical Trends Line Chart (Strictly 0 to 450 with 50 step size)
 const trendCtx = document.getElementById('trendChart').getContext('2d');
 const trendChart = new Chart(trendCtx, {
     type: 'line',
@@ -69,9 +69,9 @@ const trendChart = new Chart(trendCtx, {
         scales: {
             y: { 
                 beginAtZero: true,
-                max: 300, // Caps scale to make pollutant trends crystal clear
+                max: 450, // Ends exactly at 450
                 ticks: { 
-                    stepSize: 50, // Clean 50-unit intervals (0, 50, 100, 150, 200, 250, 300)
+                    stepSize: 50, // Clean 50-unit intervals (0, 50, 100, 150, 200, 250, 300, 350, 400, 450)
                     color: '#cbd5e1' 
                 },
                 grid: { color: 'rgba(255, 255, 255, 0.1)' } 
