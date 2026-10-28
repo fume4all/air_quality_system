@@ -1,3 +1,4 @@
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from datetime import datetime, timezone, timedelta
 import pandas as pd
 from fastapi import Depends, FastAPI, HTTPException
@@ -18,7 +19,7 @@ app = FastAPI(
         " Analysis of Air Pollution"
     )
 )
-
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
