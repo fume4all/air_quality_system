@@ -1,7 +1,7 @@
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from datetime import datetime, timezone, timedelta
 import pandas as pd
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI,Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
@@ -212,27 +212,49 @@ def get_api_historical_trends(db: Session = Depends(get_db)):
 
 # --- Telemetry Ingestion ---
 
+# --- Telemetry Ingestion via ThingSpeak Webhook / Form Data ---
 
 @app.post("/telemetry")
-def receive_telemetry(payload: AirQualityCreate, db: Session = Depends(get_db)):
-    if payload.device_id != ALLOWED_DEVICE_ID:
+@app.post("/api/sensor-data")
+async def receive_sensor_data(
+    device_id: str = Form("ESP32_SENSOR_01"),
+    field1: float = Form(...),  # PM2.5
+    field2: float = Form(...),  # PM10
+    field3: float = Form(...),  # CO
+    field4: float = Form(...),  # CO2
+    field5: float = Form(...),  # Temperature
+    field6: float = Form(...),  # Humidity
+    field7: float = Form(...),  # Pressure
+    db: Session = Depends(get_db)
+):
+    if device_id != ALLOWED_DEVICE_ID:
         raise HTTPException(
             status_code=400, detail="Only ESP32_SENSOR_01 is allowed"
         )
 
-    db_item = AirQualityReadings(**payload.model_dump(), created_at=get_current_wat_time())
-
-    db.add(db_item)
-    db.commit()
-    db.refresh(db_item)
-
-    return {
-        "status": "success",
-        "message": "Telemetry received and saved successfully",
-        "data": db_item,
-    }
-
-
+    try:
+        db_reading = AirQualityReadings(
+            device_id=device_id,
+            pm25=field1,
+            pm10=field2,
+            co=field3,
+            co2=field4,
+            temperature=field5,
+            humidity=field6,
+            pressure=field7,
+            created_at=get_current_wat_time()
+        )
+        db.add(db_reading)
+        db.commit()
+        db.refresh(db_reading)
+        return {
+            "status": "success",
+            "message": "Data logged successfully via ThingSpeak",
+            "data": db_reading,
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
 @app.post("/api/sensor-data")
 def receive_sensor_data_alias(payload: AirQualityCreate, db: Session = Depends(get_db)):
     return receive_telemetry(payload, db)
