@@ -1,3 +1,5 @@
+from apscheduler.schedulers.background import BackgroundScheduler
+import requests
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from datetime import datetime, timezone, timedelta
 import pandas as pd
@@ -341,3 +343,41 @@ def export_csv(db: Session = Depends(get_db)):
             )
         },
     )
+# --- ThingSpeak Background Poller Setup ---
+THINGSPEAK_CHANNEL_ID = "3455208"  # Your colleague's ThingSpeak Channel ID
+THINGSPEAK_URL = f"https://api.thingspeak.com/channels/{THINGSPEAK_CHANNEL_ID}/feeds/last.json"
+
+def poll_thingspeak_background():
+    """Fetches the latest entry from ThingSpeak and saves it to the MySQL database"""
+    db = SessionLocal()
+    try:
+        response = requests.get(THINGSPEAK_URL, timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            field1 = data.get("field1")
+            
+            if field1 is not None:
+                db_reading = AirQualityReadings(
+                    device_id=ALLOWED_DEVICE_ID,
+                    pm25=float(data.get("field1") or 0),
+                    pm10=float(data.get("field2") or 0),
+                    co=float(data.get("field3") or 0),
+                    co2=float(data.get("field4") or 0),
+                    temperature=float(data.get("field5") or 0),
+                    humidity=float(data.get("field6") or 0),
+                    pressure=float(data.get("field7") or 0),
+                    created_at=get_current_wat_time()
+                )
+                db.add(db_reading)
+                db.commit()
+                print("Successfully synced new data from ThingSpeak!")
+    except Exception as e:
+        print(f"Background polling error: {e}")
+        db.rollback()
+    finally:
+        db.close()
+
+# Start background scheduler when FastAPI starts up
+scheduler = BackgroundScheduler()
+scheduler.add_job(poll_thingspeak_background, 'interval', seconds=60)
+scheduler.start()
