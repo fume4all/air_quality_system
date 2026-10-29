@@ -283,7 +283,8 @@ def export_csv(db: Session = Depends(get_db)):
             time_str = ""
 
         pm25 = getattr(r, "pm25", 0) or 0
-        aqi = int(pm25 * 1.2) if pm25 else 50
+        # Use the exact EPA calculation function
+        aqi = calculate_aqi_from_pm25(pm25)
 
         if aqi <= 50:
             aqi_level = "Very Good"
