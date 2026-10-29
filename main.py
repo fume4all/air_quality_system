@@ -345,7 +345,8 @@ def export_csv(db: Session = Depends(get_db)):
     )
 # --- ThingSpeak Background Poller Setup ---
 THINGSPEAK_CHANNEL_ID = "3455208"  # Your colleague's ThingSpeak Channel ID
-THINGSPEAK_URL = f"https://api.thingspeak.com/channels/{THINGSPEAK_CHANNEL_ID}/feeds/last.json"
+THINGSPEAK_READ_API_KEY = "NWYOXYGDJVDS5AYR"  # Replace with his actual key
+THINGSPEAK_URL = f"https://api.thingspeak.com/channels/{THINGSPEAK_CHANNEL_ID}/feeds/last.json?api_key={THINGSPEAK_READ_API_KEY}"
 
 def poll_thingspeak_background():
     """Fetches the latest entry from ThingSpeak and saves it to the MySQL database"""
