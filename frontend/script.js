@@ -222,8 +222,8 @@ document.getElementById('refreshBtn').addEventListener('click', () => {
     });
 });
 
-// Auto-poll every 2 seconds for rapid live telemetry updates
-setInterval(fetchAllData, 2000);
+// Auto-poll every 15 seconds (15000ms) instead of 2 seconds to protect server resources
+setInterval(fetchAllData, 15000);
 
 // Initial load on window startup
 window.onload = fetchAllData;

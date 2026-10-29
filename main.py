@@ -255,10 +255,6 @@ async def receive_sensor_data(
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
-@app.post("/api/sensor-data")
-def receive_sensor_data_alias(payload: AirQualityCreate, db: Session = Depends(get_db)):
-    return receive_telemetry(payload, db)
-
 
 # --- CSV Export ---
 
