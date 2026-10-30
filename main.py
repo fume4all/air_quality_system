@@ -3,7 +3,7 @@ import requests
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from datetime import datetime, timezone, timedelta
 import pandas as pd
-from fastapi import Depends, FastAPI,Form, HTTPException
+from fastapi import Depends, FastAPI, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
@@ -127,16 +127,17 @@ def get_api_latest_telemetry(db: Session = Depends(get_db)):
     pm25 = getattr(latest, "pm25", 0) or 0
     calculated_aqi = calculate_aqi_from_pm25(pm25)
 
+    # Standard EPA Classification Ranges
     if calculated_aqi <= 50:
-        aqi_level = "Very Good"
-    elif calculated_aqi <= 100:
         aqi_level = "Good"
+    elif calculated_aqi <= 100:
+        aqi_level = "Moderate"
     elif calculated_aqi <= 150:
-        aqi_level = "Fair"
+        aqi_level = "Unhealthy for Sensitive Groups"
     elif calculated_aqi <= 200:
-        aqi_level = "Poor"
+        aqi_level = "Unhealthy"
     elif calculated_aqi <= 300:
-        aqi_level = "Very Poor"
+        aqi_level = "Very Unhealthy"
     else:
         aqi_level = "Hazardous"
 
@@ -212,8 +213,6 @@ def get_api_historical_trends(db: Session = Depends(get_db)):
     return result
 
 
-# --- Telemetry Ingestion ---
-
 # --- Telemetry Ingestion via ThingSpeak Webhook / Form Data ---
 
 @app.post("/telemetry")
@@ -258,8 +257,8 @@ async def receive_sensor_data(
         db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
-# --- CSV Export ---
 
+# --- CSV Export ---
 
 @app.get("/telemetry/export")
 @app.get("/export-csv")
@@ -281,26 +280,25 @@ def export_csv(db: Session = Depends(get_db)):
             time_str = ""
 
         pm25 = getattr(r, "pm25", 0) or 0
-        # Use the exact EPA calculation function
         aqi = calculate_aqi_from_pm25(pm25)
 
         if aqi <= 50:
-            aqi_level = "Very Good"
-        elif aqi <= 100:
             aqi_level = "Good"
+        elif aqi <= 100:
+            aqi_level = "Moderate"
         elif aqi <= 150:
-            aqi_level = "Fair"
+            aqi_level = "Unhealthy for Sensitive Groups"
         elif aqi <= 200:
-            aqi_level = "Poor"
+            aqi_level = "Unhealthy"
         elif aqi <= 300:
-            aqi_level = "Very Poor"
+            aqi_level = "Very Unhealthy"
         else:
             aqi_level = "Hazardous"
 
         data.append({
             "id": r.id,
             "device_id": r.device_id,
-            "pm2.5": r.pm25,  # Changed key to "pm2.5" for the export header
+            "pm2.5": r.pm25,
             "pm10": r.pm10,
             "co": r.co,
             "co2": r.co2,
@@ -318,7 +316,7 @@ def export_csv(db: Session = Depends(get_db)):
     column_order = [
         "id",
         "device_id",
-        "pm2.5",  # Changed here as well
+        "pm2.5",
         "pm10",
         "co",
         "co2",
@@ -343,19 +341,20 @@ def export_csv(db: Session = Depends(get_db)):
             )
         },
     )
+
+
 # --- ThingSpeak Background Poller Setup ---
-THINGSPEAK_CHANNEL_ID = "3455208"  # Your colleague's ThingSpeak Channel ID
-THINGSPEAK_READ_API_KEY = "NWYOXYGDJVDS5AYR"  # Read API Key
+THINGSPEAK_CHANNEL_ID = "3455208"  
+THINGSPEAK_READ_API_KEY = "NWYOXYGDJVDS5AYR"  
 THINGSPEAK_URL = f"https://api.thingspeak.com/channels/{THINGSPEAK_CHANNEL_ID}/feeds/last.json?api_key={THINGSPEAK_READ_API_KEY}"
 
 def poll_thingspeak_background():
-    """Fetches the latest entry from ThingSpeak and saves it to the MySQL database with correct field mapping"""
     db = SessionLocal()
     try:
         response = requests.get(THINGSPEAK_URL, timeout=10)
         if response.status_code == 200:
             data = response.json()
-            field4 = data.get("field4")  # PM2.5 is on Field 4
+            field4 = data.get("field4")  
             
             if field4 is not None:
                 db_reading = AirQualityReadings(
