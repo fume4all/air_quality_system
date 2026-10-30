@@ -3,9 +3,7 @@ import requests
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from datetime import datetime, timezone, timedelta
 import pandas as pd
-import os
-import logging
-from fastapi import Depends, FastAPI, Form, HTTPException
+from fastapi import Depends, FastAPI,Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
@@ -24,15 +22,10 @@ app = FastAPI(
     )
 )
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
-allowed_origins = [
-    origin.strip()
-    for origin in os.getenv("ALLOWED_ORIGINS", "").split(",")
-    if origin.strip()
-]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins or ["*"],
-    allow_credentials=False,
+    allow_origins=["*"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -45,37 +38,7 @@ ALLOWED_DEVICE_ID = "ESP32_SENSOR_01"
 WAT = timezone(timedelta(hours=1))
 
 def get_current_wat_time():
-    return datetime.now(timezone.utc)
-
-
-def save_sensor_reading(device_id: str, payload: AirQualityCreate, db: Session):
-    if device_id != ALLOWED_DEVICE_ID:
-        raise HTTPException(status_code=403, detail="Unauthorized device")
-
-    try:
-        db_reading = AirQualityReadings(
-            device_id=device_id,
-            pm25=payload.pm25,
-            pm10=payload.pm10,
-            co=payload.co,
-            co2=payload.co2,
-            temperature=payload.temperature,
-            humidity=payload.humidity,
-            pressure=payload.pressure,
-            created_at=get_current_wat_time(),
-        )
-        db.add(db_reading)
-        db.commit()
-        db.refresh(db_reading)
-        return {
-            "status": "success",
-            "message": "Data logged successfully",
-            "data": db_reading,
-        }
-    except Exception as exc:
-        db.rollback()
-        logging.exception("Failed to persist sensor reading")
-        raise HTTPException(status_code=500, detail="Database write failed") from exc
+    return datetime.now(WAT)
 
 
 @app.get("/")
@@ -135,7 +98,6 @@ def calculate_aqi_from_pm25(pm25: float) -> int:
 def get_api_latest_telemetry(db: Session = Depends(get_db)):
     latest = (
         db.query(AirQualityReadings)
-        .filter(AirQualityReadings.device_id == ALLOWED_DEVICE_ID)
         .order_by(AirQualityReadings.id.desc())
         .first()
     )
@@ -197,7 +159,6 @@ def get_api_latest_telemetry(db: Session = Depends(get_db)):
 def get_hourly_forecast(db: Session = Depends(get_db)):
     readings = (
         db.query(AirQualityReadings)
-        .filter(AirQualityReadings.device_id == ALLOWED_DEVICE_ID)
         .order_by(AirQualityReadings.id.desc())
         .limit(5)
         .all()
@@ -205,7 +166,7 @@ def get_hourly_forecast(db: Session = Depends(get_db)):
     forecast = []
     for r in reversed(readings):
         pm25 = getattr(r, "pm25", 0) or 0
-        aqi = calculate_aqi_from_pm25(pm25)
+        aqi = int(pm25 * 1.2)
         ts = getattr(r, "created_at", None)
         if ts:
             if ts.tzinfo is None:
@@ -225,12 +186,10 @@ def get_hourly_forecast(db: Session = Depends(get_db)):
 def get_api_historical_trends(db: Session = Depends(get_db)):
     readings = (
         db.query(AirQualityReadings)
-        .filter(AirQualityReadings.device_id == ALLOWED_DEVICE_ID)
-        .order_by(AirQualityReadings.id.desc())
+        .order_by(AirQualityReadings.id.asc())
         .limit(50)
         .all()
     )
-    readings.reverse()
     result = []
     for r in readings:
         ts = getattr(r, "created_at", None)
@@ -257,16 +216,9 @@ def get_api_historical_trends(db: Session = Depends(get_db)):
 
 # --- Telemetry Ingestion via ThingSpeak Webhook / Form Data ---
 
-@app.post("/api/sensor-data")
-async def receive_sensor_data_json(
-    payload: AirQualityCreate,
-    db: Session = Depends(get_db),
-):
-    return save_sensor_reading(payload.device_id, payload, db)
-
-
 @app.post("/telemetry")
-async def receive_sensor_data_form(
+@app.post("/api/sensor-data")
+async def receive_sensor_data(
     device_id: str = Form("ESP32_SENSOR_01"),
     field1: float = Form(...),  # PM2.5
     field2: float = Form(...),  # PM10
@@ -277,8 +229,13 @@ async def receive_sensor_data_form(
     field7: float = Form(...),  # Pressure
     db: Session = Depends(get_db)
 ):
+    if device_id != ALLOWED_DEVICE_ID:
+        raise HTTPException(
+            status_code=400, detail="Only ESP32_SENSOR_01 is allowed"
+        )
+
     try:
-        payload = AirQualityCreate(
+        db_reading = AirQualityReadings(
             device_id=device_id,
             pm25=field1,
             pm10=field2,
@@ -287,10 +244,19 @@ async def receive_sensor_data_form(
             temperature=field5,
             humidity=field6,
             pressure=field7,
+            created_at=get_current_wat_time()
         )
-    except ValueError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
-    return save_sensor_reading(device_id, payload, db)
+        db.add(db_reading)
+        db.commit()
+        db.refresh(db_reading)
+        return {
+            "status": "success",
+            "message": "Data logged successfully via ThingSpeak",
+            "data": db_reading,
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
 
 # --- CSV Export ---
 
@@ -298,12 +264,7 @@ async def receive_sensor_data_form(
 @app.get("/telemetry/export")
 @app.get("/export-csv")
 def export_csv(db: Session = Depends(get_db)):
-    readings = (
-        db.query(AirQualityReadings)
-        .filter(AirQualityReadings.device_id == ALLOWED_DEVICE_ID)
-        .order_by(AirQualityReadings.id.asc())
-        .all()
-    )
+    readings = db.query(AirQualityReadings).all()
     if not readings:
         raise HTTPException(status_code=404, detail="No data available for export")
 
@@ -383,31 +344,20 @@ def export_csv(db: Session = Depends(get_db)):
         },
     )
 # --- ThingSpeak Background Poller Setup ---
-THINGSPEAK_CHANNEL_ID = os.getenv("THINGSPEAK_CHANNEL_ID")
-THINGSPEAK_READ_API_KEY = os.getenv("THINGSPEAK_READ_API_KEY")
-THINGSPEAK_URL = None
-if THINGSPEAK_CHANNEL_ID:
-    THINGSPEAK_URL = (
-        f"https://api.thingspeak.com/channels/{THINGSPEAK_CHANNEL_ID}/feeds/last.json"
-        + (f"?api_key={THINGSPEAK_READ_API_KEY}" if THINGSPEAK_READ_API_KEY else "")
-    )
-
-THINGSPEAK_LAST_ENTRY_ID = None
+THINGSPEAK_CHANNEL_ID = "3455208"  # Your colleague's ThingSpeak Channel ID
+THINGSPEAK_READ_API_KEY = "NWYOXYGDJVDS5AYR"  # Read API Key
+THINGSPEAK_URL = f"https://api.thingspeak.com/channels/{THINGSPEAK_CHANNEL_ID}/feeds/last.json?api_key={THINGSPEAK_READ_API_KEY}"
 
 def poll_thingspeak_background():
     """Fetches the latest entry from ThingSpeak and saves it to the MySQL database with correct field mapping"""
-    global THINGSPEAK_LAST_ENTRY_ID
-    if not THINGSPEAK_URL:
-        return
     db = SessionLocal()
     try:
         response = requests.get(THINGSPEAK_URL, timeout=10)
         if response.status_code == 200:
             data = response.json()
             field4 = data.get("field4")  # PM2.5 is on Field 4
-            entry_id = str(data.get("entry_id", ""))
-
-            if field4 is not None and entry_id != THINGSPEAK_LAST_ENTRY_ID:
+            
+            if field4 is not None:
                 db_reading = AirQualityReadings(
                     device_id=ALLOWED_DEVICE_ID,
                     co=float(data.get("field1") or 0),       # Field 1: CO
@@ -421,25 +371,14 @@ def poll_thingspeak_background():
                 )
                 db.add(db_reading)
                 db.commit()
-                THINGSPEAK_LAST_ENTRY_ID = entry_id
-                logging.info("Synced latest ThingSpeak reading")
-    except Exception:
-        logging.exception("Background polling error")
+                print("Successfully synced correctly mapped data from ThingSpeak!")
+    except Exception as e:
+        print(f"Background polling error: {e}")
         db.rollback()
     finally:
         db.close()
 
+# Start background scheduler when FastAPI starts up
 scheduler = BackgroundScheduler()
-
-
-@app.on_event("startup")
-def start_background_services():
-    if THINGSPEAK_URL and not scheduler.running:
-        scheduler.add_job(poll_thingspeak_background, "interval", seconds=60, max_instances=1)
-        scheduler.start()
-
-
-@app.on_event("shutdown")
-def stop_background_services():
-    if scheduler.running:
-        scheduler.shutdown(wait=False)
+scheduler.add_job(poll_thingspeak_background, 'interval', seconds=60)
+scheduler.start()

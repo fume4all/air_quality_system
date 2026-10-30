@@ -17,7 +17,6 @@
         }
 
         body {
-            /* Ambient background image overlay of air pollution */
             background: linear-gradient(rgba(11, 19, 31, 0.55), rgba(11, 19, 31, 0.70)), 
                         url('https://images.unsplash.com/photo-1611273426858-450d8e3c9fce?q=80&w=1600&auto=format&fit=crop');
             background-size: cover;
@@ -130,7 +129,7 @@
         }
 
         /* Glassmorphism Panel Cards */
-        .panel-card, .pollutant-graph-panel, .source-card, .hourly-container, .param-card {
+        .panel-card, .pollutant-graph-panel, .source-card, .hourly-container, .param-card, .analysis-pro-card {
             background-color: rgba(15, 23, 42, 0.82);
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.15);
@@ -358,6 +357,21 @@
 
         .val-rf { color: #4ade80; font-weight: 700; }
         .val-dt { color: #facc15; font-weight: 700; }
+
+        /* Pro Detailed Analysis Card Styling */
+        .analysis-pro-card {
+            border-radius: 18px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+        }
+        .analysis-subbox {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
     </style>
 </head>
 <body>
@@ -525,6 +539,42 @@
             </div>
         </div>
 
+        <!-- Detailed Pro Live Air Quality Analysis Card -->
+        <div class="analysis-pro-card">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                <h3 style="font-size: 1.15rem; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-brain" style="color: #38bdf8;"></i> Live Air Quality Analysis & Health Impact
+                </h3>
+                <span style="font-size: 1.5rem;">🧠</span>
+            </div>
+
+            <!-- AQI Status & Value -->
+            <div style="margin-bottom: 1.2rem;">
+                <div id="aqi-status-text" style="font-size: 1.8rem; font-weight: 800; letter-spacing: 0.5px; color: #eab308; margin-bottom: 0.2rem;">Fair</div>
+                <div style="font-size: 0.88rem; color: #94a3b8;">Calculated AQI: <span id="calculated-aqi-value" style="font-weight: 700; color: #f8fafc;">107</span></div>
+            </div>
+
+            <!-- What does this mean? Section -->
+            <div class="analysis-subbox">
+                <h4 style="font-size: 0.9rem; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem;">
+                    <i class="fas fa-info-circle" style="color: #38bdf8;"></i> What does this mean?
+                </h4>
+                <p style="font-size: 0.83rem; color: #cbd5e1; line-height: 1.5;">
+                    Air quality may affect people who are more sensitive to pollution, including children and people with asthma or other heart or lung conditions. The general public is less likely to be affected at this level.
+                </p>
+            </div>
+
+            <!-- Health Recommendations Section -->
+            <div class="analysis-subbox">
+                <h4 style="font-size: 0.9rem; font-weight: 700; color: #34d399; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem;">
+                    <i class="fas fa-shield-alt" style="color: #34d399;"></i> Health Recommendations
+                </h4>
+                <p style="font-size: 0.83rem; color: #cbd5e1; line-height: 1.5;">
+                    Sensitive individuals should consider reducing prolonged or strenuous outdoor activities, especially if they experience symptoms. Others can generally continue normal activities while monitoring air quality updates.
+                </p>
+            </div>
+        </div>
+
         <!-- Telemetry Trends & AI Performance -->
         <div class="dashboard-row">
             <div class="panel-card">
@@ -586,7 +636,9 @@
             </div>
         </div>
     </div>
-    <script src="/static/script.js"></script>
 
+    <!-- Script Imports -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/static/script.js"></script>
 </body>
 </html>

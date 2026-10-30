@@ -1,199 +1,255 @@
-const pollutantCanvas = document.getElementById("pollutantChart");
-const trendCanvas = document.getElementById("trendChart");
-
-const pollutantChart = pollutantCanvas ? new Chart(pollutantCanvas, {
-  type: "bar",
-  data: {
-    labels: ["PM2.5", "PM10", "CO", "CO₂", "Temp", "Humidity", "Pressure"],
-    datasets: [{
-      data: [0, 0, 0, 0, 0, 0, 0],
-      backgroundColor: ["#38bdf8", "#3b82f6", "#f59e0b", "#10b981", "#ef4444", "#06b6d4", "#a855f7"],
-      borderWidth: 0,
-      borderRadius: 6,
-      maxBarThickness: 44,
-    }],
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    animation: { duration: 350 },
-    plugins: { legend: { display: false } },
-    scales: {
-      y: { beginAtZero: true, ticks: { color: "#cbd5e1" }, grid: { color: "rgba(255,255,255,.08)" } },
-      x: { ticks: { color: "#cbd5e1" }, grid: { display: false } },
+// 1. Initialize Chart.js for the 7-Parameter Pollutant Bar Chart
+const pollutantCtx = document.getElementById('pollutantChart').getContext('2d');
+const pollutantChart = new Chart(pollutantCtx, {
+    type: 'bar',
+    data: {
+        labels: ['PM2.5', 'PM10', 'CO', 'CO₂', 'Temp (°C)', 'Humidity (%)', 'Pressure'],
+        datasets: [{
+            label: 'Latest Sensor Values',
+            data: [0, 0, 0, 0, 0, 0, 0],
+            backgroundColor: [
+                '#38bdf8', // PM2.5 - Cyan
+                '#3b82f6', // PM10 - Blue
+                '#f59e0b', // CO - Amber
+                '#10b981', // CO2 - Emerald
+                '#ef4444', // Temperature - Red
+                '#06b6d4', // Humidity - Light Blue
+                '#a855f7'  // Pressure - Purple
+            ],
+            borderWidth: 1,
+            borderRadius: 6
+        }]
     },
-  },
-}) : null;
+    options: { 
+        responsive: true, 
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false } 
+        },
+        scales: { 
+            y: { 
+                beginAtZero: true,
+                max: 450,
+                ticks: { 
+                    stepSize: 50, 
+                    color: '#cbd5e1' 
+                },
+                grid: { color: 'rgba(255, 255, 255, 0.1)' }
+            },
+            x: {
+                grid: { display: false },
+                ticks: { color: '#cbd5e1' }
+            }
+        } 
+    }
+});
 
-const trendChart = trendCanvas ? new Chart(trendCanvas, {
-  type: "line",
-  data: {
-    labels: [],
-    datasets: [
-      { label: "PM2.5", data: [], borderColor: "#38bdf8", tension: 0.3, yAxisID: "y" },
-      { label: "PM10", data: [], borderColor: "#a855f7", tension: 0.3, yAxisID: "y" },
-      { label: "CO", data: [], borderColor: "#f59e0b", tension: 0.3, yAxisID: "y" },
-      { label: "CO₂", data: [], borderColor: "#10b981", tension: 0.3, yAxisID: "y" },
-      { label: "Temp °C", data: [], borderColor: "#ef4444", tension: 0.3, yAxisID: "y" },
-      { label: "Humidity %", data: [], borderColor: "#06b6d4", tension: 0.3, yAxisID: "y" },
-      { label: "Pressure", data: [], borderColor: "#8b5cf6", tension: 0.3, yAxisID: "y1" },
-    ],
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    animation: false,
-    plugins: { legend: { labels: { color: "#cbd5e1", boxWidth: 10, font: { size: 9 } } } },
-    scales: {
-      y: { beginAtZero: true, ticks: { color: "#cbd5e1" }, grid: { color: "rgba(255,255,255,.08)" } },
-      y1: { position: "right", grid: { drawOnChartArea: false }, ticks: { color: "#a855f7" } },
-      x: { ticks: { color: "#cbd5e1", maxTicksLimit: 8 }, grid: { display: false } },
+// 2. Initialize Historical Trends Line Chart (Area fill style with 0-650 scale and 50-unit steps)
+const trendCtx = document.getElementById('trendChart').getContext('2d');
+const trendChart = new Chart(trendCtx, {
+    type: 'line',
+    data: {
+        labels: [],
+        datasets: [
+            { label: 'PM2.5', data: [], borderColor: '#38bdf8', backgroundColor: 'rgba(56, 189, 248, 0.15)', tension: 0.3, fill: true, yAxisID: 'y' },
+            { label: 'PM10', data: [], borderColor: '#a855f7', backgroundColor: 'rgba(168, 85, 247, 0.15)', tension: 0.3, fill: true, yAxisID: 'y' },
+            { label: 'CO', data: [], borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.15)', tension: 0.3, fill: true, yAxisID: 'y' },
+            { label: 'CO₂', data: [], borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.15)', tension: 0.3, fill: true, yAxisID: 'y' },
+            { label: 'Temp (°C)', data: [], borderColor: '#ef4444', tension: 0.3, fill: false, yAxisID: 'y' },
+            { label: 'Humidity (%)', data: [], borderColor: '#06b6d4', tension: 0.3, fill: false, yAxisID: 'y' },
+            { label: 'Pressure', data: [], borderColor: '#8b5cf6', tension: 0.3, fill: false, yAxisID: 'y1' }
+        ]
     },
-  },
-}) : null;
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { 
+            legend: { labels: { color: '#cbd5e1', font: { size: 9 } } } 
+        },
+        scales: {
+            y: { 
+                type: 'linear',
+                position: 'left',
+                beginAtZero: true,
+                min: 0,
+                max: 650, // Calibrated strictly from 0 to 650
+                ticks: { 
+                    stepSize: 50, // Clean 50-unit intervals (0, 50, 100... 650)
+                    color: '#cbd5e1' 
+                },
+                grid: { color: 'rgba(255, 255, 255, 0.1)' } 
+            },
+            y1: {
+                type: 'linear',
+                position: 'right',
+                grid: { drawOnChartArea: false },
+                ticks: { color: '#a855f7' }
+            },
+            x: { grid: { display: false }, ticks: { color: '#cbd5e1' } }
+        }
+    }
+});
 
-let previousAqi = null;
-let refreshInProgress = false;
+// Global variable to track previous AQI for smooth number animation
+let previousAqi = 0;
 
-function formatSensorValue(value, decimals = 1) {
-  const number = Number(value);
-  return Number.isFinite(number) ? number.toFixed(decimals).replace(/\.0$/, "") : "--";
+// Function to smoothly animate AQI number changes
+function animateValue(id, start, end, duration) {
+    if (start === end) return;
+    const range = end - start;
+    let current = start;
+    const increment = end > start ? 1 : -1;
+    const stepTime = Math.abs(Math.floor(duration / range));
+    const obj = document.getElementById(id);
+    if (!obj) return;
+
+    const timer = setInterval(() => {
+        current += increment;
+        obj.innerText = `Calculated AQI: ${current}`;
+        if (current === end) {
+            clearInterval(timer);
+        }
+    }, Math.max(stepTime, 20));
 }
 
-function setText(id, value) {
-  const element = document.getElementById(id);
-  if (element) element.textContent = value;
-}
-
-function statusColor(status) {
-  if (status === "Very Good" || status === "Good") return "#4ade80";
-  if (status === "Fair") return "#facc15";
-  if (status === "Poor") return "#fb923c";
-  return "#ef4444";
-}
-
-function animateAqi(end) {
-  const target = document.getElementById("ai_aqi_index");
-  if (!target) return;
-  const endNumber = Number.isFinite(Number(end)) ? Number(end) : 0;
-  const startNumber = previousAqi ?? endNumber;
-  if (startNumber === endNumber) {
-    target.textContent = `Calculated AQI: ${endNumber}`;
-    return;
-  }
-  const started = performance.now();
-  const duration = 450;
-  const frame = (now) => {
-    const progress = Math.min((now - started) / duration, 1);
-    const value = Math.round(startNumber + (endNumber - startNumber) * progress);
-    target.textContent = `Calculated AQI: ${value}`;
-    if (progress < 1) requestAnimationFrame(frame);
-  };
-  requestAnimationFrame(frame);
-  previousAqi = endNumber;
-}
-
-async function fetchJson(url, signal) {
-  const response = await fetch(url, { signal, cache: "no-store", headers: { Accept: "application/json" } });
-  if (!response.ok) throw new Error(`${url} returned ${response.status}`);
-  return response.json();
-}
-
-async function fetchLatest() {
-  const data = await fetchJson("/api/latest-sensor-data");
-  setText("device_id", data.device_id || "Unknown");
-  setText("timestamp", data.timestamp || "--");
-
-  const sensors = ["pm25", "pm10", "co", "co2", "temperature", "humidity", "pressure"];
-  sensors.forEach((key) => setText(key, formatSensorValue(data[key])));
-
-  const status = data.aqi_status || "Waiting for Data";
-  setText("ai_prediction", status);
-  const aiStatus = document.getElementById("ai_prediction");
-  if (aiStatus) aiStatus.style.color = statusColor(status);
-  animateAqi(data.calculated_aqi ?? 0);
-  setText("aqi-status-text", status);
-  setText("calculated-aqi-value", String(data.calculated_aqi ?? 0));
-
-  if (pollutantChart) {
-    pollutantChart.data.datasets[0].data = sensors.map((key) =>
-      Number.isFinite(Number(data[key])) ? Number(data[key]) : 0
-    );
-    pollutantChart.update();
-  }
-}
-
-async function fetchForecast() {
-  const forecast = await fetchJson("/api/hourly-forecast");
-  if (!Array.isArray(forecast)) return;
-  forecast.slice(0, 5).forEach((item, index) => {
-    setText(`hf${index}`, item.aqi ?? "--");
-    setText(`ht${index}`, `${formatSensorValue(item.temperature, 0)}°`);
-    if (index > 0) setText(`htime${index}`, item.time || "--:--");
-  });
-}
-
-async function fetchHistory() {
-  const history = await fetchJson("/api/historical-trends");
-  if (!Array.isArray(history) || !trendChart) return;
-  trendChart.data.labels = history.map((item) => item.timestamp || "");
-  const keys = ["pm25", "pm10", "co", "co2", "temperature", "humidity", "pressure"];
-  keys.forEach((key, index) => {
-    trendChart.data.datasets[index].data = history.map((item) => Number(item[key]));
-  });
-  trendChart.update();
-}
-
+// 3. Main Data Fetching and UI Update Function
 async function fetchAllData() {
-  if (refreshInProgress) return;
-  refreshInProgress = true;
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 10000);
-  try {
-    const latestResponse = await fetchJson("/api/latest-sensor-data", controller.signal);
-    const data = latestResponse;
-    setText("device_id", data.device_id || "Unknown");
-    setText("timestamp", data.timestamp || "--");
-    ["pm25", "pm10", "co", "co2", "temperature", "humidity", "pressure"].forEach((key) => {
-      setText(key, formatSensorValue(data[key]));
-    });
-    const status = data.aqi_status || "Waiting for Data";
-    setText("ai_prediction", status);
-    const aiStatus = document.getElementById("ai_prediction");
-    if (aiStatus) aiStatus.style.color = statusColor(status);
-    animateAqi(data.calculated_aqi ?? 0);
-    setText("aqi-status-text", status);
-    setText("calculated-aqi-value", String(data.calculated_aqi ?? 0));
-    if (pollutantChart) {
-      pollutantChart.data.datasets[0].data = ["pm25", "pm10", "co", "co2", "temperature", "humidity", "pressure"].map((key) =>
-        Number.isFinite(Number(data[key])) ? Number(data[key]) : 0
-      );
-      pollutantChart.update();
-    }
-    await Promise.allSettled([fetchForecast(), fetchHistory()]);
-  } catch (error) {
-    if (error.name !== "AbortError") console.error("Telemetry refresh failed:", error);
-    setText("device_id", "Connection unavailable");
-  } finally {
-    clearTimeout(timeout);
-    refreshInProgress = false;
-  }
-}
-
-const refreshButton = document.getElementById("refreshBtn");
-const refreshIcon = document.getElementById("refreshIcon");
-if (refreshButton) {
-  refreshButton.addEventListener("click", async () => {
-    refreshIcon?.classList.add("fa-spin");
-    refreshButton.disabled = true;
     try {
-      await fetchAllData();
-    } finally {
-      refreshButton.disabled = false;
-      setTimeout(() => refreshIcon?.classList.remove("fa-spin"), 400);
+        const response = await fetch('/api/latest-sensor-data');
+        if (!response.ok) throw new Error("Network response was not ok");
+        
+        const data = await response.json();
+
+        // Update Header Meta Info
+        if (data.device_id) document.getElementById('device_id').innerText = data.device_id;
+        if (data.timestamp) document.getElementById('timestamp').innerText = data.timestamp;
+
+        // Update the 7 Hardware Parameter Cards
+        document.getElementById('pm25').innerText = data.pm25 ?? '--';
+        document.getElementById('pm10').innerText = data.pm10 ?? '--';
+        document.getElementById('co').innerText = data.co ?? '--';
+        document.getElementById('co2').innerText = data.co2 ?? '--';
+        document.getElementById('temperature').innerText = data.temperature ?? '--';
+        document.getElementById('humidity').innerText = data.humidity ?? '--';
+        document.getElementById('pressure').innerText = data.pressure ?? '--';
+
+        // Update Dynamic AI Classification Card with Smooth Animation
+        const aiPredElem = document.getElementById('ai_prediction');
+        const aiIndexElem = document.getElementById('ai_aqi_index');
+        if (data.aqi_status) {
+            aiPredElem.innerText = data.aqi_status;
+            
+            // Animate AQI number change dynamically if it changes
+            if (data.calculated_aqi !== previousAqi) {
+                animateValue('ai_aqi_index', previousAqi, data.calculated_aqi, 500);
+                previousAqi = data.calculated_aqi;
+            } else {
+                aiIndexElem.innerText = `Calculated AQI: ${data.calculated_aqi}`;
+            }
+
+            // Dynamic color coding based on status
+            if (data.aqi_status === "Very Good" || data.aqi_status === "Good") {
+                aiPredElem.style.color = "#4ade80"; // Green
+            } else if (data.aqi_status.includes("Fair")) {
+                aiPredElem.style.color = "#facc15"; // Yellow
+            } else {
+                aiPredElem.style.color = "#ef4444"; // Red
+            }
+        }
+        async function updateAirQualityAnalysis() {
+    try {
+        const response = await fetch('/api/latest-sensor-data');
+        const data = await response.json();
+
+        // Update elements
+        document.getElementById('aqi-status-text').textContent = data.aqi_status || 'Waiting for Data';
+        document.getElementById('calculated-aqi-value').textContent = data.calculated_aqi || 0;
+
+        // Optional: Dynamically color code the status text based on level
+        const statusElement = document.getElementById('aqi-status-text');
+        const aqi = data.calculated_aqi;
+        
+        if (aqi <= 50) statusElement.className = "text-3xl font-bold tracking-wide text-emerald-400 mb-1";
+        else if (aqi <= 100) statusElement.className = "text-3xl font-bold tracking-wide text-yellow-400 mb-1";
+        else if (aqi <= 150) statusElement.className = "text-3xl font-bold tracking-wide text-orange-400 mb-1";
+        else statusElement.className = "text-3xl font-bold tracking-wide text-red-500 mb-1";
+
+    } catch (error) {
+        console.error("Failed to fetch live AQI analysis:", error);
     }
-  });
 }
 
-fetchAllData();
+// Call on load and refresh every 30 seconds
+updateAirQualityAnalysis();
+setInterval(updateAirQualityAnalysis, 30000);
+
+        // Update the 7-Parameter Pollutant Bar Chart
+        pollutantChart.data.datasets[0].data = [
+            data.pm25 || 0,
+            data.pm10 || 0,
+            data.co || 0,
+            data.co2 || 0,
+            data.temperature || 0,
+            data.humidity || 0,
+            data.pressure || 0
+        ];
+        pollutantChart.update();
+
+    } catch (err) {
+        console.error("Error fetching telemetry data:", err);
+        document.getElementById('device_id').innerText = "Connection Failed";
+    }
+
+    // Fetch and Populate Hourly Forecast
+    try {
+        const forecastRes = await fetch('/api/hourly-forecast');
+        if (forecastRes.ok) {
+            const forecast = await forecastRes.json();
+            forecast.forEach((item, index) => {
+                const badge = document.getElementById(`hf${index}`);
+                const timeElem = index === 0 ? null : document.getElementById(`htime${index}`);
+                const tempElem = document.getElementById(`ht${index}`);
+
+                if (badge) badge.innerText = item.aqi;
+                if (tempElem) tempElem.innerText = `${Math.round(item.temperature)}°`;
+                if (timeElem && index > 0) timeElem.innerText = item.time;
+            });
+        }
+    } catch (e) {
+        console.log("Hourly forecast fetch error:", e);
+    }
+
+    // Fetch Historical Trends for all 7 parameters
+    try {
+        const historyRes = await fetch('/api/historical-trends');
+        if (historyRes.ok) {
+            const history = await historyRes.json();
+            trendChart.data.labels = history.map(item => item.timestamp);
+            trendChart.data.datasets[0].data = history.map(item => item.pm25);
+            trendChart.data.datasets[1].data = history.map(item => item.pm10);
+            trendChart.data.datasets[2].data = history.map(item => item.co);
+            trendChart.data.datasets[3].data = history.map(item => item.co2);
+            trendChart.data.datasets[4].data = history.map(item => item.temperature);
+            trendChart.data.datasets[5].data = history.map(item => item.humidity);
+            trendChart.data.datasets[6].data = history.map(item => item.pressure);
+            trendChart.update();
+        }
+    } catch (e) {
+        console.log("Historical trend fetch error:", e);
+    }
+}
+
+// Bind Refresh Button Event
+document.getElementById('refreshBtn').addEventListener('click', () => {
+    const icon = document.getElementById('refreshIcon');
+    icon.classList.add('fa-spin');
+    fetchAllData().finally(() => {
+        setTimeout(() => icon.classList.remove('fa-spin'), 600);
+    });
+});
+
+// Auto-poll every 15 seconds (15000ms) instead of 2 seconds to protect server resources
 setInterval(fetchAllData, 15000);
+
+// Initial load on window startup
+window.onload = fetchAllData;

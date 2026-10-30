@@ -6,13 +6,13 @@ class AirQualityCreate(BaseModel):
         description="Authorized ESP32 device ID"
     )
 
-    pm25: float = Field(ge=0, le=10000)
-    pm10: float = Field(ge=0, le=10000)
-    co: float = Field(ge=0, le=10000)
-    co2: float = Field(ge=0, le=100000)
-    temperature: float = Field(ge=-100, le=100)
-    humidity: float = Field(ge=0, le=100)
-    pressure: float = Field(ge=0, le=2000)
+    pm25: float
+    pm10: float
+    co: float
+    co2: float
+    temperature: float
+    humidity: float
+    pressure: float
 
     class Config:
         from_attributes = True
