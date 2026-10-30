@@ -345,33 +345,33 @@ def export_csv(db: Session = Depends(get_db)):
     )
 # --- ThingSpeak Background Poller Setup ---
 THINGSPEAK_CHANNEL_ID = "3455208"  # Your colleague's ThingSpeak Channel ID
-THINGSPEAK_READ_API_KEY = "NWYOXYGDJVDS5AYR"  # Replace with his actual key
+THINGSPEAK_READ_API_KEY = "NWYOXYGDJVDS5AYR"  # Read API Key
 THINGSPEAK_URL = f"https://api.thingspeak.com/channels/{THINGSPEAK_CHANNEL_ID}/feeds/last.json?api_key={THINGSPEAK_READ_API_KEY}"
 
 def poll_thingspeak_background():
-    """Fetches the latest entry from ThingSpeak and saves it to the MySQL database"""
+    """Fetches the latest entry from ThingSpeak and saves it to the MySQL database with correct field mapping"""
     db = SessionLocal()
     try:
         response = requests.get(THINGSPEAK_URL, timeout=10)
         if response.status_code == 200:
             data = response.json()
-            field1 = data.get("field1")
+            field4 = data.get("field4")  # PM2.5 is on Field 4
             
-            if field1 is not None:
+            if field4 is not None:
                 db_reading = AirQualityReadings(
                     device_id=ALLOWED_DEVICE_ID,
-                    pm25=float(data.get("field1") or 0),
-                    pm10=float(data.get("field2") or 0),
-                    co=float(data.get("field3") or 0),
-                    co2=float(data.get("field4") or 0),
-                    temperature=float(data.get("field5") or 0),
-                    humidity=float(data.get("field6") or 0),
-                    pressure=float(data.get("field7") or 0),
+                    co=float(data.get("field1") or 0),       # Field 1: CO
+                    co2=float(data.get("field2") or 0),      # Field 2: CO2
+                    pm25=float(data.get("field4") or 0),     # Field 4: PM2.5
+                    pm10=float(data.get("field5") or 0),     # Field 5: PM10
+                    temperature=float(data.get("field6") or 0), # Field 6: Temperature
+                    humidity=float(data.get("field7") or 0),    # Field 7: Humidity
+                    pressure=float(data.get("field8") or 0),    # Field 8: Pressure
                     created_at=get_current_wat_time()
                 )
                 db.add(db_reading)
                 db.commit()
-                print("Successfully synced new data from ThingSpeak!")
+                print("Successfully synced correctly mapped data from ThingSpeak!")
     except Exception as e:
         print(f"Background polling error: {e}")
         db.rollback()
