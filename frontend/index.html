@@ -569,7 +569,6 @@
                 <p class="param-value" id="pressure">--</p>
                 <span class="param-unit">hPa</span>
             </div>
-            
         </div>
 
         <!-- Telemetry Trends & AI Performance -->
@@ -685,10 +684,93 @@
                 </p>
             </div>
 
+            <!-- Full Parameters Breakdown Grid -->
+            <h5 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Live Telemetry Parameters</h5>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                
+                <!-- PM2.5 -->
+                <div class="bg-slate-900/50 p-3 rounded-2xl border border-slate-800">
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-slate-400 font-medium">PM2.5</span>
+                        <span class="text-amber-400 font-bold"><span id="modal-pm25">--</span> µg/m³</span>
+                    </div>
+                    <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                        <div class="bg-amber-400 h-full rounded-full" style="width: 45%;"></div>
+                    </div>
+                </div>
+
+                <!-- PM10 -->
+                <div class="bg-slate-900/50 p-3 rounded-2xl border border-slate-800">
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-slate-400 font-medium">PM10</span>
+                        <span class="text-emerald-400 font-bold"><span id="modal-pm10">--</span> µg/m³</span>
+                    </div>
+                    <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                        <div class="bg-emerald-400 h-full rounded-full" style="width: 35%;"></div>
+                    </div>
+                </div>
+
+                <!-- Carbon Monoxide (CO) -->
+                <div class="bg-slate-900/50 p-3 rounded-2xl border border-slate-800">
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-slate-400 font-medium">Carbon Monoxide (CO)</span>
+                        <span class="text-emerald-400 font-bold"><span id="modal-co">--</span> ppm</span>
+                    </div>
+                    <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                        <div class="bg-emerald-400 h-full rounded-full" style="width: 20%;"></div>
+                    </div>
+                </div>
+
+                <!-- Carbon Dioxide (CO2) -->
+                <div class="bg-slate-900/50 p-3 rounded-2xl border border-slate-800">
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-slate-400 font-medium">Carbon Dioxide (CO₂)</span>
+                        <span class="text-emerald-400 font-bold"><span id="modal-co2">--</span> ppm</span>
+                    </div>
+                    <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                        <div class="bg-emerald-400 h-full rounded-full" style="width: 40%;"></div>
+                    </div>
+                </div>
+
+                <!-- Temperature -->
+                <div class="bg-slate-900/50 p-3 rounded-2xl border border-slate-800">
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-slate-400 font-medium">Temperature</span>
+                        <span class="text-blue-400 font-bold"><span id="modal-temperature">--</span> °C</span>
+                    </div>
+                    <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                        <div class="bg-blue-400 h-full rounded-full" style="width: 60%;"></div>
+                    </div>
+                </div>
+
+                <!-- Humidity -->
+                <div class="bg-slate-900/50 p-3 rounded-2xl border border-slate-800">
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-slate-400 font-medium">Relative Humidity</span>
+                        <span class="text-blue-400 font-bold"><span id="modal-humidity">--</span> %</span>
+                    </div>
+                    <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                        <div class="bg-blue-400 h-full rounded-full" style="width: 68%;"></div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Pressure (Full Width) -->
+            <div class="bg-slate-900/50 p-3 rounded-2xl border border-slate-800 mb-6">
+                <div class="flex justify-between text-xs mb-1">
+                    <span class="text-slate-400 font-medium">Atmospheric Pressure</span>
+                    <span class="text-purple-400 font-bold"><span id="modal-pressure">--</span> hPa</span>
+                </div>
+                <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                    <div class="bg-purple-400 h-full rounded-full" style="width: 75%;"></div>
+                </div>
+            </div>
+
             <!-- Footer Action -->
-            <div class="flex items-center justify-between pt-4 border-t border-slate-800" style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem;">
-                <span class="text-[10px] text-slate-500" style="font-size: 0.7rem; color: #64748b;">FUTA IoT Research Station</span>
-                <button onclick="closeModal()" style="padding: 0.5rem 1.2rem; border-radius: 12px; background: #eab308; color: #0f172a; font-weight: 700; font-size: 0.8rem; border: none; cursor: pointer;">
+            <div class="flex items-center justify-between pt-4 border-t border-slate-800">
+                <span class="text-[10px] text-slate-500">Federal University of Technology, Akure (FUTA)</span>
+                <button onclick="closeModal()" class="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition-all shadow-lg shadow-amber-500/20">
                     Close Analysis
                 </button>
             </div>
