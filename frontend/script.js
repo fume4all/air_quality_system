@@ -105,7 +105,11 @@ async function fetchLatest() {
   setText("timestamp", data.timestamp || "--");
 
   const sensors = ["pm25", "pm10", "co", "co2", "temperature", "humidity", "pressure"];
-  sensors.forEach((key) => setText(key, formatSensorValue(data[key])));
+  sensors.forEach((key) => {
+    const val = formatSensorValue(data[key]);
+    setText(key, val);
+    setText(`modal-${key}`, val);
+  });
 
   const status = data.aqi_status || "Waiting for Data";
   setText("ai_prediction", status);
@@ -114,6 +118,8 @@ async function fetchLatest() {
   animateAqi(data.calculated_aqi ?? 0);
   setText("aqi-status-text", status);
   setText("calculated-aqi-value", String(data.calculated_aqi ?? 0));
+  setText("modal-aqi-val", String(data.calculated_aqi ?? 0));
+  setText("modal-status-text", status);
 
   if (pollutantChart) {
     pollutantChart.data.datasets[0].data = sensors.map((key) =>
@@ -150,13 +156,17 @@ async function fetchAllData() {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 10000);
   try {
-    const latestResponse = await fetchJson("/api/latest-sensor-data", controller.signal);
-    const data = latestResponse;
+    const data = await fetchJson("/api/latest-sensor-data", controller.signal);
     setText("device_id", data.device_id || "Unknown");
     setText("timestamp", data.timestamp || "--");
-    ["pm25", "pm10", "co", "co2", "temperature", "humidity", "pressure"].forEach((key) => {
-      setText(key, formatSensorValue(data[key]));
+
+    const sensors = ["pm25", "pm10", "co", "co2", "temperature", "humidity", "pressure"];
+    sensors.forEach((key) => {
+      const val = formatSensorValue(data[key]);
+      setText(key, val);
+      setText(`modal-${key}`, val);
     });
+
     const status = data.aqi_status || "Waiting for Data";
     setText("ai_prediction", status);
     const aiStatus = document.getElementById("ai_prediction");
@@ -164,8 +174,11 @@ async function fetchAllData() {
     animateAqi(data.calculated_aqi ?? 0);
     setText("aqi-status-text", status);
     setText("calculated-aqi-value", String(data.calculated_aqi ?? 0));
+    setText("modal-aqi-val", String(data.calculated_aqi ?? 0));
+    setText("modal-status-text", status);
+
     if (pollutantChart) {
-      pollutantChart.data.datasets[0].data = ["pm25", "pm10", "co", "co2", "temperature", "humidity", "pressure"].map((key) =>
+      pollutantChart.data.datasets[0].data = sensors.map((key) =>
         Number.isFinite(Number(data[key])) ? Number(data[key]) : 0
       );
       pollutantChart.update();
