@@ -7,7 +7,7 @@
     <!-- Icons & Chart Libraries -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Tailwind CSS CDN (Required for card styling & grids) -->
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
 
     <style>
@@ -108,9 +108,6 @@
         .btn-primary { background-color: #38bdf8; color: #0f172a; }
         .btn-primary:hover { background-color: #7dd3fc; }
 
-        .btn-secondary { background-color: rgba(30, 41, 59, 0.9); color: #f8fafc; border: 1px solid rgba(255, 255, 255, 0.2); }
-        .btn-secondary:hover { background-color: #334155; }
-
         /* Location Header */
         .location-header {
             text-align: center;
@@ -172,8 +169,9 @@
         }
 
         .aqi-label {
-            font-size: 0.95rem;
+            font-size: 0.8rem;
             margin-bottom: 0.2rem;
+            line-height: 1.1;
         }
 
         .aqi-range {
@@ -399,35 +397,35 @@
             <p>Ondo State, Nigeria | Hardware Node Telemetry</p>
         </div>
 
-        <!-- AQI Scale Card -->
+        <!-- AQI Scale Card (Standard EPA Classifications) -->
         <div class="panel-card" style="margin-bottom: 1.5rem;">
             <div class="section-title">
-                <i class="fas fa-layer-group"></i> Air Quality Index (AQI) Reference Scale
+                <i class="fas fa-layer-group"></i> Air Quality Index (AQI) Reference Scale (EPA Standard)
             </div>
             <div class="aqi-scale-grid">
                 <div class="aqi-level-box" style="background-color: #22c55e; color: #0f172a;">
-                    <span class="aqi-label">Very Good</span>
-                    <span class="aqi-range">0 - 50</span>
+                    <span class="aqi-label">Good</span>
+                    <span class="aqi-range">0–50</span>
                 </div>
                 <div class="aqi-level-box" style="background-color: #84cc16; color: #0f172a;">
-                    <span class="aqi-label">Good</span>
-                    <span class="aqi-range">51 - 100</span>
+                    <span class="aqi-label">Moderate</span>
+                    <span class="aqi-range">51–100</span>
                 </div>
                 <div class="aqi-level-box" style="background-color: #eab308; color: #0f172a;">
-                    <span class="aqi-label">Fair</span>
-                    <span class="aqi-range">101 - 150</span>
+                    <span class="aqi-label">Unhealthy for Sensitive Groups</span>
+                    <span class="aqi-range">101–150</span>
                 </div>
                 <div class="aqi-level-box" style="background-color: #f97316; color: #ffffff;">
-                    <span class="aqi-label">Poor</span>
-                    <span class="aqi-range">151 - 200</span>
+                    <span class="aqi-label">Unhealthy</span>
+                    <span class="aqi-range">151–200</span>
                 </div>
                 <div class="aqi-level-box" style="background-color: #ef4444; color: #ffffff;">
-                    <span class="aqi-label">Very Poor</span>
-                    <span class="aqi-range">201 - 300</span>
+                    <span class="aqi-label">Very Unhealthy</span>
+                    <span class="aqi-range">201–300</span>
                 </div>
                 <div class="aqi-level-box" style="background-color: #991b1b; color: #ffffff;">
                     <span class="aqi-label">Hazardous</span>
-                    <span class="aqi-range">300+</span>
+                    <span class="aqi-range">301–500</span>
                 </div>
             </div>
         </div>
@@ -456,7 +454,7 @@
             <div class="flex items-baseline justify-between my-4">
                 <div>
                     <div class="text-xs uppercase tracking-wider text-slate-400 font-semibold">Condition</div>
-                    <div id="aqi-status-text" class="text-3xl font-extrabold text-amber-400 tracking-tight" style="font-size: 2rem;">Fair</div>
+                    <div id="aqi-status-text" class="text-3xl font-extrabold text-amber-400 tracking-tight" style="font-size: 2rem;">Moderate</div>
                 </div>
                 <div class="text-right">
                     <div class="text-xs uppercase tracking-wider text-slate-400 font-semibold">Calculated AQI</div>
@@ -634,7 +632,7 @@
         </div>
     </div>
 
-    <!-- Detailed Modal Overlay (Click-to-View Popup with Scrolling & Colored Cards) -->
+    <!-- Detailed Modal Overlay -->
     <div id="detail-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300" style="position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); opacity: 0; pointer-events: none; transition: all 0.3s ease;">
         <div class="glass-modal w-full max-w-lg rounded-3xl p-6 sm:p-8 transform scale-95 transition-all duration-300 max-h-[85vh] overflow-y-auto shadow-2xl" id="modal-content" style="background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 24px; padding: 2rem; max-width: 500px; width: 90%; color: #f8fafc; max-height: 85vh; overflow-y: auto;">
             
@@ -658,8 +656,8 @@
             <div class="my-4 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between" style="background: rgba(234, 179, 8, 0.1); border: 1px solid rgba(234, 179, 8, 0.3); border-radius: 16px; padding: 1rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
                 <div>
                     <span class="text-xs uppercase tracking-wider text-amber-400 font-bold" style="font-size: 0.7rem; color: #eab308; font-weight: 700; text-transform: uppercase;">Air Quality Status</span>
-                    <h4 class="text-2xl font-black text-white" style="font-size: 1.5rem; font-weight: 800;"><span id="modal-status-text">Fair</span> <span class="text-sm font-normal text-slate-300" style="font-size: 0.85rem; font-weight: 400; color: #cbd5e1;">(AQI: <span id="modal-aqi-val">107</span>)</span></h4>
-                    <p class="text-xs text-slate-300 mt-1" style="font-size: 0.78rem; color: #cbd5e1; margin-top: 0.25rem;">Acceptable air quality with minor thresholds for sensitive populations.</p>
+                    <h4 class="text-2xl font-black text-white" style="font-size: 1.5rem; font-weight: 800;"><span id="modal-status-text">Unhealthy for Sensitive Groups</span> <span class="text-sm font-normal text-slate-300" style="font-size: 0.85rem; font-weight: 400; color: #cbd5e1;">(AQI: <span id="modal-aqi-val">107</span>)</span></h4>
+                    <p class="text-xs text-slate-300 mt-1" style="font-size: 0.78rem; color: #cbd5e1; margin-top: 0.25rem;">Air quality may affect people with respiratory sensitivity.</p>
                 </div>
             </div>
 
@@ -670,7 +668,7 @@
                     <i class="fa-solid fa-circle-info"></i> What does this mean?
                 </h5>
                 <p class="text-xs text-slate-300 leading-relaxed" style="font-size: 0.82rem; color: #cbd5e1; line-height: 1.5;">
-                    Air quality may affect people who are more sensitive to pollution, including children and people with asthma or other heart or lung conditions. The general public is less likely to be affected at this level.
+                    Members of sensitive groups may experience health effects. The general public is less likely to be affected.
                 </p>
             </div>
 
@@ -681,17 +679,15 @@
                     <i class="fa-solid fa-notes-medical"></i> Health Recommendations
                 </h5>
                 <p class="text-xs text-slate-300 leading-relaxed" style="font-size: 0.82rem; color: #cbd5e1; line-height: 1.5;">
-                    Sensitive individuals should consider reducing prolonged or strenuous outdoor activities, especially if they experience symptoms. Others can generally continue normal activities while monitoring air quality updates.
+                    Active children and adults, and people with respiratory disease, such as asthma, should avoid prolonged outdoor exertion.
                 </p>
             </div>
 
-            <!-- Full Parameters Breakdown Grid (Exact Colored Card Design) -->
+            <!-- Full Parameters Breakdown Grid -->
             <h5 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Live Telemetry Parameters</h5>
-            
             <div class="space-y-3 mb-6">
                 <!-- Row 1: PM2.5 & PM10 -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <!-- PM2.5 -->
                     <div class="bg-slate-900/60 p-3.5 rounded-2xl border border-slate-800 shadow-inner">
                         <div class="flex justify-between items-center text-xs mb-2">
                             <span class="text-slate-300 font-medium">PM2.5</span>
@@ -701,8 +697,6 @@
                             <div class="bg-amber-400 h-full rounded-full shadow-[0_0_8px_rgba(251,191,36,0.5)]" style="width: 45%;"></div>
                         </div>
                     </div>
-
-                    <!-- PM10 -->
                     <div class="bg-slate-900/60 p-3.5 rounded-2xl border border-slate-800 shadow-inner">
                         <div class="flex justify-between items-center text-xs mb-2">
                             <span class="text-slate-300 font-medium">PM10</span>
@@ -714,9 +708,8 @@
                     </div>
                 </div>
 
-                <!-- Row 2: Carbon Monoxide & Carbon Dioxide -->
+                <!-- Row 2: CO & CO2 -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <!-- Carbon Monoxide (CO) -->
                     <div class="bg-slate-900/60 p-3.5 rounded-2xl border border-slate-800 shadow-inner">
                         <div class="flex justify-between items-center text-xs mb-2">
                             <span class="text-slate-300 font-medium">Carbon Monoxide (CO)</span>
@@ -726,8 +719,6 @@
                             <div class="bg-emerald-400 h-full rounded-full shadow-[0_0_8px_rgba(52,211,153,0.5)]" style="width: 20%;"></div>
                         </div>
                     </div>
-
-                    <!-- Carbon Dioxide (CO2) -->
                     <div class="bg-slate-900/60 p-3.5 rounded-2xl border border-slate-800 shadow-inner">
                         <div class="flex justify-between items-center text-xs mb-2">
                             <span class="text-slate-300 font-medium">Carbon Dioxide (CO₂)</span>
@@ -741,7 +732,6 @@
 
                 <!-- Row 3: Temperature & Humidity -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <!-- Temperature -->
                     <div class="bg-slate-900/60 p-3.5 rounded-2xl border border-slate-800 shadow-inner">
                         <div class="flex justify-between items-center text-xs mb-2">
                             <span class="text-slate-300 font-medium">Temperature</span>
@@ -751,8 +741,6 @@
                             <div class="bg-blue-400 h-full rounded-full shadow-[0_0_8px_rgba(96,165,250,0.5)]" style="width: 60%;"></div>
                         </div>
                     </div>
-
-                    <!-- Relative Humidity -->
                     <div class="bg-slate-900/60 p-3.5 rounded-2xl border border-slate-800 shadow-inner">
                         <div class="flex justify-between items-center text-xs mb-2">
                             <span class="text-slate-300 font-medium">Relative Humidity</span>
@@ -764,7 +752,7 @@
                     </div>
                 </div>
 
-                <!-- Row 4: Atmospheric Pressure (Full Width) -->
+                <!-- Row 4: Pressure -->
                 <div class="bg-slate-900/60 p-3.5 rounded-2xl border border-slate-800 shadow-inner">
                     <div class="flex justify-between items-center text-xs mb-2">
                         <span class="text-slate-300 font-medium">Atmospheric Pressure</span>
@@ -786,7 +774,7 @@
         </div>
     </div>
 
-    <!-- Modal Open/Close Script -->
+    <!-- Modal Script -->
     <script>
         const modal = document.getElementById('detail-modal');
         const modalContent = document.getElementById('modal-content');
