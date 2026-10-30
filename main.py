@@ -300,7 +300,7 @@ def export_csv(db: Session = Depends(get_db)):
         data.append({
             "id": r.id,
             "device_id": r.device_id,
-            "pm25": r.pm25,
+            "pm2.5": r.pm25,  # Changed key to "pm2.5" for the export header
             "pm10": r.pm10,
             "co": r.co,
             "co2": r.co2,
@@ -318,7 +318,7 @@ def export_csv(db: Session = Depends(get_db)):
     column_order = [
         "id",
         "device_id",
-        "pm25",
+        "pm2.5",  # Changed here as well
         "pm10",
         "co",
         "co2",
